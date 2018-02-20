@@ -1,10 +1,10 @@
+package network_applications_2;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 public class Main {
@@ -40,7 +40,7 @@ public class Main {
         System.out.println("GET ResponseCode " + responseCode);
         if (responseCode == HttpURLConnection.HTTP_OK) {
             InputStream is = connection.getInputStream();
-            byte[] dataBytes = inputStream2ByteArray(is);
+            byte[] dataBytes = Utilities.inputStream2ByteArray(is);
             String data = new String(dataBytes);
             System.out.println("RESPONSE " + data);
         }
@@ -61,55 +61,9 @@ public class Main {
         System.out.println("POST ResponseCode " + responseCode);
         if (responseCode == HttpURLConnection.HTTP_OK) {
             InputStream is = connection.getInputStream();
-            byte[] dataBytes = inputStream2ByteArray(is);
+            byte[] dataBytes = Utilities.inputStream2ByteArray(is);
             String data = new String(dataBytes);
             System.out.println("RESPONSE " + data);
         }
     }
-
-    private static byte[] inputStream2ByteArray(InputStream is) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-        int nRead;
-        byte[] data = new byte[16384];
-
-        while ((nRead = is.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
-        }
-
-        buffer.flush();
-
-        return buffer.toByteArray();
-    }
-
-    static class MyHandler implements HttpHandler {
-
-        private void handleRequest(HttpExchange t) throws IOException {
-            System.out.println(t.getRequestURI().toASCIIString());
-            System.out.println(t.getRequestMethod());
-            System.out.println(t.getRemoteAddress().getAddress().getHostAddress());
-            System.out.println(t.getRemoteAddress().getPort());
-            for (String header: t.getRequestHeaders().keySet()) {
-                System.out.println(header + ": " + t.getRequestHeaders().get(header));
-            }
-            InputStream is = t.getRequestBody();
-            String data = new String(inputStream2ByteArray(is));
-            System.out.println("DATA " + data);
-        }
-
-        private void handleResponse(HttpExchange t) throws IOException {
-            String response = "This is the response";
-            t.sendResponseHeaders(200, response.length());
-            try (OutputStream os = t.getResponseBody()) {
-                os.write(response.getBytes());
-            }
-        }
-
-        @Override
-        public void handle(HttpExchange t) throws IOException {
-            handleRequest(t);
-            handleResponse(t);
-        }
-    }
-
 }
