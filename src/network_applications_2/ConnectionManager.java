@@ -17,29 +17,35 @@ public class ConnectionManager {
     }
 
     private URL findFromDefaultHosts() {
+        URL url = null;
         try (BufferedReader reader = new BufferedReader(new FileReader(defaultHosts))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                URL url = new URL(line + "/test");
-                if (tryConnection(url)) return url;
+                url = new URL(line + "/test");
+                if (!tryConnection(url)) {
+                    url = null;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return url;
     }
 
     private URL findFromKnownHosts() {
+        URL url = null;
         try (BufferedReader reader = new BufferedReader(new FileReader(knownHosts))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                URL url = new URL(line + "/test");
-                if (tryConnection(url)) return url;
+                url = new URL(line + "/test");
+                if (!tryConnection(url)) {
+                    url = null;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+        return url;
     }
 
     private boolean tryConnection(URL url) {
