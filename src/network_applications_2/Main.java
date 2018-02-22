@@ -2,10 +2,7 @@ package network_applications_2;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.URL;
-
-import com.sun.net.httpserver.HttpServer;
 
 public class Main {
 
@@ -22,10 +19,12 @@ public class Main {
                 port = DEFAULT_PORT;
             }
         }
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-        server.createContext("/test", new MyHandler());
-        server.setExecutor(null);
-        server.start();
+        System.out.println("Starting application");
+        Application application = new Application(port);
+        System.out.println("Application started");
+        System.out.println("Num of connections: " + application.getConnections().size());
+        System.out.println("Num of connections alive: " + application.getConnections().stream().filter(Connection::isAlive).count());
+        System.out.println();
 
         sendGetRequest();
         sendPostRequest();

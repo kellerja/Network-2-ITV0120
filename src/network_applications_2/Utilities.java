@@ -1,8 +1,8 @@
 package network_applications_2;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 class Utilities {
     static byte[] inputStream2ByteArray(InputStream is) throws IOException {
@@ -18,5 +18,18 @@ class Utilities {
         buffer.flush();
 
         return buffer.toByteArray();
+    }
+
+    static List<Connection> getConnectionsFromFiles(List<File> files) throws IOException {
+        List<Connection> connections = new ArrayList<>();
+        for (File file: files) {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                connections.add(new Connection(line));
+            }
+            reader.close();
+        }
+        return connections;
     }
 }
