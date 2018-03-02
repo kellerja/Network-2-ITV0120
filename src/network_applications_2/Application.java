@@ -1,6 +1,7 @@
 package network_applications_2;
 
 import com.sun.net.httpserver.HttpServer;
+import network_applications_2.message.MessagesHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +29,7 @@ public class Application {
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/test", new MyHandler());
         server.createContext("/", new MyHandler());
+        server.createContext("/messages", new MessagesHandler(null));
         server.setExecutor(null);
     }
 

@@ -4,8 +4,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class Utilities {
-    static byte[] inputStream2ByteArray(InputStream is) throws IOException {
+public class Utilities {
+    public static byte[] inputStream2ByteArray(InputStream is) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
         int nRead;
@@ -20,7 +20,7 @@ class Utilities {
         return buffer.toByteArray();
     }
 
-    static List<Connection> getConnectionsFromFiles(List<File> files) throws IOException {
+    public static List<Connection> getConnectionsFromFiles(List<File> files) throws IOException {
         List<Connection> connections = new ArrayList<>();
         for (File file: files) {
             BufferedReader reader = new BufferedReader(new FileReader(file));
