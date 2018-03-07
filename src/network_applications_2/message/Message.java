@@ -1,6 +1,8 @@
 package network_applications_2.message;
 
-public class Message {
+import java.io.Serializable;
+
+public class Message implements Comparable<Message>, Serializable {
 
     private final long timestamp;
     private final String data;
@@ -22,5 +24,18 @@ public class Message {
             throw new MessageFormatException("Message first parameter must be an unix timestamp", e);
         }
         return new Message(timestamp, possibleMessageInParts[1]);
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    @Override
+    public int compareTo(Message o) {
+        return Long.compare(this.timestamp, o.getTimestamp());
     }
 }
