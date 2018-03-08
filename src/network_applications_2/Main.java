@@ -1,5 +1,7 @@
 package network_applications_2;
 
+import network_applications_2.connections.Connection;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;

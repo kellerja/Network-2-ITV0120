@@ -1,4 +1,4 @@
-package network_applications_2;
+package network_applications_2.connections;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
