@@ -11,6 +11,7 @@ class MyHandler implements HttpHandler {
 
     private void handleRequest(HttpExchange t) throws IOException {
         System.out.println(t.getRequestURI().toASCIIString());
+        System.out.println(t.getRequestURI().getQuery());
         System.out.println(t.getRequestMethod());
         System.out.println(t.getRemoteAddress().getAddress().getHostAddress());
         System.out.println(t.getRemoteAddress().getPort());

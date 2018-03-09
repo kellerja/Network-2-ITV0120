@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConnectionsHandler implements HttpHandler {
 
@@ -33,6 +34,10 @@ public class ConnectionsHandler implements HttpHandler {
 
     public ConnectionsHandler() {
 
+    }
+
+    public List<Connection> getAliveConnections() {
+        return getConnections().stream().filter(Connection::isAlive).collect(Collectors.toList());
     }
 
     public void updateConnections() {

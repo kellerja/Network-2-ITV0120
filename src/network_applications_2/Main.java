@@ -28,8 +28,8 @@ public class Main {
         System.out.println("Num of connections alive: " + application.getConnections().stream().filter(Connection::isAlive).count());
         System.out.println();
 
-        sendGetRequest();
-        sendPostRequest();
+        //sendGetRequest();
+        //sendPostRequest();
     }
 
     private static void sendGetRequest() throws IOException {

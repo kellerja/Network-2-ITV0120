@@ -36,6 +36,11 @@ public class Message implements Comparable<Message>, Serializable {
 
     @Override
     public int compareTo(Message o) {
-        return Long.compare(this.timestamp, o.getTimestamp());
+        if (o == null) return -1;
+        int compare = Long.compare(this.timestamp, o.getTimestamp());
+        if (compare == 0) {
+            compare = this.data.compareTo(o.data);
+        }
+        return compare;
     }
 }
