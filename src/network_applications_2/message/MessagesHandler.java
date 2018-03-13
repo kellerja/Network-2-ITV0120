@@ -9,11 +9,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MessagesHandler implements HttpHandler {
 
-    private List<Message> messages = new ArrayList<>();
+    private static List<Message> messages = Collections.synchronizedList(new ArrayList<>());
     private Application application;
     private MessagesFullEvent messagesFullEvent;
 
@@ -26,6 +27,7 @@ public class MessagesHandler implements HttpHandler {
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
+        System.out.println(httpExchange.getRequestURI());
         String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\n");
         StringBuilder response = new StringBuilder();
         List<Message> newMessages = new ArrayList<>();
@@ -43,11 +45,13 @@ public class MessagesHandler implements HttpHandler {
             }
         }
 
-        application.floodMessage(newMessages);
+        if (newMessages.size() > 0) {
+            application.floodMessage(newMessages);
+        }
 
-        if (messagesFullEvent != null && messages.size() > 0) {
+        if (messagesFullEvent != null && messages.size() > 5) {
             messagesFullEvent.propagateMessages(messages);
-            messages = new ArrayList<>();
+            messages = Collections.synchronizedList(new ArrayList<>());
         }
 
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());

@@ -43,4 +43,9 @@ public class Message implements Comparable<Message>, Serializable {
         }
         return compare;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Message && compareTo((Message) o) == 0;
+    }
 }

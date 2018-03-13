@@ -55,7 +55,6 @@ public class Application {
             messageBody.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
         }
         for (Connection connection : connectionsHandler.getAliveConnections()) {
-            System.out.println("FLOOD " + connection.getUrl());
             new Thread(() -> {
                 try {
                     URL url = new URL(connection.getUrl() + "/messages");
@@ -79,7 +78,7 @@ public class Application {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }).run();
+            }).start();
             System.out.println("END FLOOD");
         }
     }

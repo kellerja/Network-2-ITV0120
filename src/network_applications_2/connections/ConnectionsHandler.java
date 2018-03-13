@@ -3,7 +3,6 @@ package network_applications_2.connections;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import network_applications_2.Utilities;
-import network_applications_2.message.MessagesFullEvent;
 
 import java.io.File;
 import java.io.IOException;
