@@ -21,11 +21,19 @@ public class MessagesHandler implements HttpHandler {
         this.messagesFullEvent = event;
     }
 
-    private void handleGetRequest(HttpExchange httpExchange) {
+    private void handleGetRequest(HttpExchange httpExchange) throws IOException {
+        System.out.println(httpExchange.getRequestURI().getPath());
+        StringBuilder response = new StringBuilder();
+        for (Message message: messages) {
+            response.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
+        }
+        httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
+        try (OutputStream os = httpExchange.getResponseBody()) {
+            os.write(response.toString().getBytes());
+        }
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
-        System.out.println(httpExchange.getRequestURI());
         String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\n");
         StringBuilder response = new StringBuilder();
         List<Message> newMessages = new ArrayList<>();

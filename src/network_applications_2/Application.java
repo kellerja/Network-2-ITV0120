@@ -73,6 +73,8 @@ public class Application {
                         System.out.println("RESPONSE " + data); // TODO: make sure data was saved/no errors
                     }
                     httpURLConnection.disconnect();
+                } catch (ConnectException e) {
+                    connection.testConnection();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

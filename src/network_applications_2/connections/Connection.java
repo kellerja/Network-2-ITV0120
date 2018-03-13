@@ -14,7 +14,7 @@ public class Connection {
         alive = testConnection();
     }
 
-    boolean testConnection() {
+    public boolean testConnection() {
         try {
             URL url = new URL(this.url);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
