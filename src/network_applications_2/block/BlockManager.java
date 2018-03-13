@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class BlockManager implements MessagesFullEvent {
 
@@ -97,7 +98,7 @@ public class BlockManager implements MessagesFullEvent {
     }
 
     @Override
-    public void propagateMessages(List<Message> messages) {
-        createBlock(messages);
+    public void propagateMessages(Set<Message> messages) {
+        createBlock(new ArrayList<>(messages));
     }
 }

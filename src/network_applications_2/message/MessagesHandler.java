@@ -8,13 +8,11 @@ import network_applications_2.Utilities;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class MessagesHandler implements HttpHandler {
 
-    private static List<Message> messages = Collections.synchronizedList(new ArrayList<>());
+    private static Set<Message> messages = Collections.synchronizedSet(new TreeSet<>());
     private Application application;
     private MessagesFullEvent messagesFullEvent;
 
@@ -51,7 +49,7 @@ public class MessagesHandler implements HttpHandler {
 
         if (messagesFullEvent != null && messages.size() > 5) {
             messagesFullEvent.propagateMessages(messages);
-            messages = Collections.synchronizedList(new ArrayList<>());
+            messages = Collections.synchronizedSet(new TreeSet<>());
         }
 
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
