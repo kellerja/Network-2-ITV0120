@@ -16,14 +16,15 @@ public class Block implements Serializable {
 
     public Block(String previousHash) {
         this.previousHash = previousHash;
-        timestamp = System.currentTimeMillis();
+        //timestamp = System.currentTimeMillis();
     }
 
     public Block(String previousHash, List<Message> messages) {
         this.previousHash = previousHash;
         this.messages = messages;
         Collections.sort(messages);
-        timestamp = System.currentTimeMillis();
+        timestamp = messages.get(messages.size()-1).getTimestamp();
+        //timestamp = System.currentTimeMillis();
     }
 
     public void addMessage(Message message) {
