@@ -51,13 +51,16 @@ public class ConnectionsHandler implements HttpHandler {
     }
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
-        String[] body =
-                new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\n");
+        String query = httpExchange.getRequestURI().getQuery();
+        String[] body = new String[0];
+        if (query != null) {
+            body = httpExchange.getRequestURI().getQuery().split("&");
+        }
         boolean isAlive = false;
         int count = 1;
 
         for (String line : body) {
-            String[] element = line.split(",");
+            String[] element = line.split("=");
             if (element.length != 2) return;
 
             if (element[0].equals("state")) {
@@ -66,8 +69,14 @@ public class ConnectionsHandler implements HttpHandler {
             }
             else if (element[0].equals("count")) {
                 String value = element[1];
-                if (value.equals("infinity")) count = 0;
-                else count = Math.max(Integer.parseInt(value), 0);
+                if (value.equals("infinity")) count = 0; // Maybe it should not take in strings at all.
+                else {
+                    try {
+                        count = Math.max(Integer.parseInt(value), 0);
+                    } catch (NumberFormatException e) {
+                        System.out.println(e);
+                    }
+                }
             }
         }
 
