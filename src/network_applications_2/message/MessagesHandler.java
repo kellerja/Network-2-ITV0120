@@ -4,10 +4,14 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import network_applications_2.Application;
 import network_applications_2.Utilities;
+import network_applications_2.connections.Connection;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 
 public class MessagesHandler implements HttpHandler {
@@ -52,7 +56,7 @@ public class MessagesHandler implements HttpHandler {
         }
 
         if (newMessages.size() > 0) {
-            application.floodMessage(newMessages);
+            floodMessage(newMessages);
         }
 
         if (messagesFullEvent != null && messages.size() > 5) {
@@ -75,6 +79,45 @@ public class MessagesHandler implements HttpHandler {
             case "POST":
                 handlePostRequest(httpExchange);
                 break;
+        }
+    }
+
+    public void floodMessage(List<Message> messages) {
+        StringBuilder messageBody = new StringBuilder();
+        for (Message message: messages) {
+            messageBody.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
+        }
+        for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
+            new Thread(() -> {
+                try {
+                    URL url = new URL(connection.getUrl() + "/messages");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("POST");
+
+                    httpURLConnection.setDoOutput(true);
+                    OutputStream os = httpURLConnection.getOutputStream();
+                    os.write(messageBody.toString().getBytes());
+                    os.flush();
+                    os.close();
+
+                    int responseCode = httpURLConnection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        InputStream is = httpURLConnection.getInputStream();
+                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
+                        String[] data = new String(dataBytes).split("\n");
+                        for (String line: data) {
+                            if (!line.matches("^Message .*,.* saved$")) {
+                                System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
+                            }
+                        }
+                    }
+                    httpURLConnection.disconnect();
+                } catch (ConnectException e) {
+                    connection.testConnection();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
         }
     }
 }

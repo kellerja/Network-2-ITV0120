@@ -45,46 +45,7 @@ public class Application {
         return port;
     }
 
-    public List<Connection> getConnections() {
-        return connectionsHandler.getConnections();
-    }
-
-    public void floodMessage(List<Message> messages) {
-        StringBuilder messageBody = new StringBuilder();
-        for (Message message: messages) {
-            messageBody.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
-        }
-        for (Connection connection : connectionsHandler.getAliveConnections()) {
-            new Thread(() -> {
-                try {
-                    URL url = new URL(connection.getUrl() + "/messages");
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    httpURLConnection.setRequestMethod("POST");
-
-                    httpURLConnection.setDoOutput(true);
-                    OutputStream os = httpURLConnection.getOutputStream();
-                    os.write(messageBody.toString().getBytes());
-                    os.flush();
-                    os.close();
-
-                    int responseCode = httpURLConnection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        InputStream is = httpURLConnection.getInputStream();
-                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\n");
-                        for (String line: data) {
-                            if (!line.matches("^Message .*,.* saved$")) {
-                                System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
-                            }
-                        }
-                    }
-                    httpURLConnection.disconnect();
-                } catch (ConnectException e) {
-                    connection.testConnection();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        }
+    public ConnectionsHandler getConnectionsHandler() {
+        return connectionsHandler;
     }
 }
