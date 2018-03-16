@@ -69,8 +69,12 @@ public class Application {
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String data = new String(dataBytes);
-                        System.out.println("RESPONSE " + data); // TODO: make sure data was saved/no errors
+                        String[] data = new String(dataBytes).split("\n");
+                        for (String line: data) {
+                            if (!line.matches("^Message .*,.* saved$")) {
+                                System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
+                            }
+                        }
                     }
                     httpURLConnection.disconnect();
                 } catch (ConnectException e) {
