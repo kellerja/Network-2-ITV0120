@@ -13,17 +13,17 @@ public class Message implements Comparable<Message>, Serializable {
     }
 
     public static Message parseMessage(String possibleMessage) throws MessageFormatException {
-        String[] possibleMessageInParts = possibleMessage.split(",");
-        if (possibleMessageInParts.length != 2) {
-            throw new MessageFormatException("Message length must be bigger than 2");
+        int commaIndex = possibleMessage.indexOf(",");
+        if (commaIndex < 0) {
+            throw new MessageFormatException("Message must have timestamp and data separated by a comma");
         }
         long timestamp;
         try {
-            timestamp = Long.parseLong(possibleMessageInParts[0]);
+            timestamp = Long.parseLong(possibleMessage.substring(0, commaIndex));
         } catch (NumberFormatException e) {
-            throw new MessageFormatException("Message first parameter must be an unix timestamp", e);
+            throw new MessageFormatException("Message first parameter must be a correct unix timestamp", e);
         }
-        return new Message(timestamp, possibleMessageInParts[1]);
+        return new Message(timestamp, possibleMessage.substring(commaIndex + 1));
     }
 
     public long getTimestamp() {
