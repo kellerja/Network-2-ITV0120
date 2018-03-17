@@ -1,6 +1,7 @@
 package network_applications_2.block;
 
 import network_applications_2.message.Message;
+import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.MessagesFullEvent;
 
 import javax.xml.bind.DatatypeConverter;
@@ -9,6 +10,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LongSummaryStatistics;
 import java.util.Set;
 
 public class BlockManager implements MessagesFullEvent {
@@ -49,6 +51,31 @@ public class BlockManager implements MessagesFullEvent {
             e.printStackTrace();
         }
         return buf;
+    }
+
+    public static Block parseBlock(String possibleBlock) throws BlockFormatException, MessageFormatException {
+        String[] blockParts = possibleBlock.split("\\|");
+        if (blockParts.length < 4) {
+            throw new BlockFormatException("Block must have timestamp, previous hash, new hash and data separated by |");
+        }
+        String newHash = blockParts[0];
+        String prevHash = blockParts[1];
+        String timestampStr = blockParts[2];
+        String data = blockParts[3];
+
+        long timestamp;
+        try {
+            timestamp = Long.parseLong(timestampStr);
+        } catch (NumberFormatException e) {
+            throw new BlockFormatException("Block third parameter mus be a correct unix timestamp", e);
+        }
+
+        List<Message> messagesList = new ArrayList<>();
+        String[] messages = data.split(";");
+        for (String i : messages) {
+            messagesList.add(Message.parseMessage(i));
+        }
+        return new Block(timestamp, prevHash, messagesList, newHash);
     }
 
     public static void main(String[] args) {

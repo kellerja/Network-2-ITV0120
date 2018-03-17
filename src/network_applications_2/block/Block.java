@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Block implements Serializable {
+public class Block implements Comparable<Block>, Serializable {
 
     private long timestamp;
     private String previousHash = "";
@@ -24,7 +24,13 @@ public class Block implements Serializable {
         this.messages = messages;
         Collections.sort(messages);
         timestamp = messages.get(messages.size()-1).getTimestamp();
-        //timestamp = System.currentTimeMillis();
+    }
+
+    public Block(long timestamp, String previousHash, List<Message> messages, String newHash) {
+        this.timestamp = timestamp;
+        this.previousHash = previousHash;
+        this.messages = messages;
+        this.newHash = newHash;
     }
 
     public void addMessage(Message message) {
@@ -52,5 +58,21 @@ public class Block implements Serializable {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+
+    @Override
+    public int compareTo(Block o) {
+        if (o == null) return -1;
+        int compare = 0;
+        if (!this.newHash.equals(o.getPreviousHash())) {
+            compare = Long.compare(this.timestamp, o.getTimestamp());
+        }
+        return compare;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Block && compareTo((Block) o) == 0;
     }
 }
