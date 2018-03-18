@@ -3,12 +3,15 @@ package network_applications_2;
 import com.sun.net.httpserver.HttpServer;
 import network_applications_2.block.BlockHandler;
 import network_applications_2.block.BlockManager;
+import network_applications_2.connections.Connection;
 import network_applications_2.connections.ConnectionsHandler;
 import network_applications_2.connections.PingPongHandler;
 import network_applications_2.message.MessagesHandler;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Application {
 
@@ -26,6 +29,14 @@ public class Application {
         connectionsHandler.requestConnections(true, -1);
         blockHandler.requestMissingBlocks();
         messagesHandler.requestCurrentMessages();
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            for (Connection connection: connectionsHandler.getConnections()) {
+                connection.testConnection();
+            }
+        }, 5, 5, TimeUnit.MINUTES);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            connectionsHandler.requestConnections(true, -1);
+        }, 20, 20, TimeUnit.MINUTES);
     }
 
     private void setUpServer() throws IOException {
