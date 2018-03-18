@@ -34,4 +34,10 @@ public class Utilities {
         }
         return connections;
     }
+
+    public static void writeConnectionToFile(Connection connection, File file) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+            writer.write(connection.getUrl() + "\n");
+        }
+    }
 }

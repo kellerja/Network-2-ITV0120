@@ -41,4 +41,9 @@ public class Connection {
         return alive;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        return o != null && o instanceof Connection && ((Connection) o).getUrl().equals(url);
+    }
+
 }

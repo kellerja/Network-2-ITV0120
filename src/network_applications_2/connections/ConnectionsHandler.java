@@ -6,11 +6,13 @@ import network_applications_2.Utilities;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,10 +45,10 @@ public class ConnectionsHandler implements HttpHandler {
 
     public void updateConnections() {
         try {
-            connections = Utilities.getConnectionsFromFiles(Arrays.asList(
+            connections = Collections.synchronizedList(Utilities.getConnectionsFromFiles(Arrays.asList(
                     new File("resources/DefaultHosts.csv"),
                     new File("resources/KnownHosts.csv"))
-            );
+            ));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -97,13 +99,30 @@ public class ConnectionsHandler implements HttpHandler {
     }
 
     public void requestConnections(boolean isAlive, int count) {
-        String state = isAlive ? "alive" : "all";
-        String countValue = count <= 0 ? "infinity" : Integer.toString(count);
+        final String state = isAlive ? "alive" : "all";
+        final String countValue = count <= 0 ? "infinity" : Integer.toString(count);
         for (Connection connection: connections) {
             new Thread(() -> {
                 try {
-                    URL url = new URL(connection.getUrl() + "/connections");
+                    URL url = new URL(connection.getUrl() + "/connections?state=" + state + "&count=" + countValue);
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("GET");
+
+                    int responseCode = httpURLConnection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        InputStream is = httpURLConnection.getInputStream();
+                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
+                        String[] data = new String(dataBytes).split("\n");
+                        for (String line: data) {
+                            Connection newConnection = new Connection(line);
+                            if (connections.contains(newConnection)) {
+                                continue;
+                            }
+                            connections.add(newConnection);
+                            Utilities.writeConnectionToFile(newConnection, new File("resources/KnownHosts.csv"));
+                        }
+                    }
+                    httpURLConnection.disconnect();
                 } catch (ConnectException e) {
                     connection.testConnection();
                 } catch (IOException e) {
