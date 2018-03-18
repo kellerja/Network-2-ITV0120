@@ -76,7 +76,7 @@ public class ConnectionsHandler implements HttpHandler {
                     try {
                         count = Math.max(Integer.parseInt(value), 0);
                     } catch (NumberFormatException e) {
-                        System.out.println(e);
+                        e.printStackTrace();
                     }
                 }
             }

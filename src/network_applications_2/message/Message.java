@@ -21,7 +21,7 @@ public class Message implements Comparable<Message>, Serializable {
         try {
             timestamp = Long.parseLong(possibleMessage.substring(0, commaIndex));
         } catch (NumberFormatException e) {
-            throw new MessageFormatException("Message first parameter must be a correct unix timestamp", e);
+            throw new MessageFormatException("Message first parameter must be a correct unix timestamp " + possibleMessage, e);
         }
         return new Message(timestamp, possibleMessage.substring(commaIndex + 1));
     }
