@@ -7,7 +7,6 @@ import network_applications_2.Utilities;
 import network_applications_2.connections.Connection;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
-import network_applications_2.message.MessagesFullEvent;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -145,6 +144,7 @@ public class BlockHandler implements HttpHandler {
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
                         String[] data = new String(dataBytes).split("\n");
                         for (String line: data) {
+                            if ("".equals(line)) continue;
                             Block block = BlockManager.parseBlock(line);
                             if (blocks.contains(block)) {
                                 continue;

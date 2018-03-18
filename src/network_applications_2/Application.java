@@ -25,6 +25,7 @@ public class Application {
         connectionsHandler.updateConnections();
         connectionsHandler.requestConnections(true, -1);
         blockHandler.requestMissingBlocks();
+        messagesHandler.requestCurrentMessages();
     }
 
     private void setUpServer() throws IOException {

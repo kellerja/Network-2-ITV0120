@@ -16,6 +16,8 @@ import java.util.*;
 
 public class MessagesHandler implements HttpHandler {
 
+    public static final int MINIMUM_MESSAGES_PER_BLOCK = 5;
+
     private static Set<Message> messages = Collections.synchronizedSet(new TreeSet<>());
     private Application application;
     private MessagesFullEvent messagesFullEvent;
@@ -59,7 +61,7 @@ public class MessagesHandler implements HttpHandler {
             floodMessage(newMessages);
         }
 
-        if (messagesFullEvent != null && messages.size() > 5) {
+        if (messagesFullEvent != null && messages.size() > MINIMUM_MESSAGES_PER_BLOCK) {
             messagesFullEvent.propagateMessages(messages);
             messages = Collections.synchronizedSet(new TreeSet<>());
         }
@@ -114,6 +116,42 @@ public class MessagesHandler implements HttpHandler {
                 } catch (ConnectException e) {
                     connection.testConnection();
                 } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+
+    public void requestCurrentMessages() {
+        for (Connection connection: application.getConnectionsHandler().getAliveConnections()) {
+            new Thread(() -> {
+                try {
+                    URL url = new URL(connection.getUrl() + "/messages");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("GET");
+
+                    if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        InputStream is = httpURLConnection.getInputStream();
+                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
+                        String[] data = new String(dataBytes).split("\n");
+                        for (String line: data) {
+                            if ("".equals(line)) continue;
+                            Message message = Message.parseMessage(line);
+                            if (messages.contains(message)) {
+                                continue;
+                            }
+                            messages.add(message);
+
+                            if (messagesFullEvent != null && messages.size() > MINIMUM_MESSAGES_PER_BLOCK) {
+                                messagesFullEvent.propagateMessages(messages);
+                                messages = Collections.synchronizedSet(new TreeSet<>());
+                            }
+                        }
+                    }
+                    httpURLConnection.disconnect();
+                } catch (ConnectException e) {
+                    connection.testConnection();
+                } catch (IOException | MessageFormatException e) {
                     e.printStackTrace();
                 }
             }).start();
