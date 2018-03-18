@@ -24,6 +24,7 @@ public class Application {
         server.start();
         connectionsHandler.updateConnections();
         connectionsHandler.requestConnections(true, -1);
+        blockHandler.requestMissingBlocks();
     }
 
     private void setUpServer() throws IOException {

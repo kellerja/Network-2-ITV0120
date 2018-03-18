@@ -12,10 +12,7 @@ import network_applications_2.message.MessagesFullEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 
 public class BlockHandler implements HttpHandler {
@@ -61,7 +58,7 @@ public class BlockHandler implements HttpHandler {
                 blocks.add(block);
                 newBlocks.add(block);
             } catch (BlockFormatException | MessageFormatException e) {
-                response.append("Message ").append(possibleBlock).append(" malformed with error ").append(e.getMessage()).append("\n");
+                response.append("Block ").append(possibleBlock).append(" malformed with error ").append(e.getMessage()).append("\n");
             }
         }
         if (newBlocks.size() > 0) {
@@ -133,6 +130,37 @@ public class BlockHandler implements HttpHandler {
         }
     }
 
+    public void requestMissingBlocks() {
+        /* TODO: get last block and request everything after that.
+            Currently since blocks are not preserved I will request all blocks */
+        for (Connection connection: application.getConnectionsHandler().getAliveConnections()) {
+            new Thread(() -> {
+                try {
+                    URL url = new URL(connection.getUrl() + "/blocks");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("GET");
+
+                    if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        InputStream is = httpURLConnection.getInputStream();
+                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
+                        String[] data = new String(dataBytes).split("\n");
+                        for (String line: data) {
+                            Block block = BlockManager.parseBlock(line);
+                            if (blocks.contains(block)) {
+                                continue;
+                            }
+                            blocks.add(block);
+                        }
+                    }
+                    httpURLConnection.disconnect();
+                } catch (ConnectException e) {
+                    connection.testConnection();
+                } catch (IOException | MessageFormatException | BlockFormatException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
 
     /*public void floodMessage(List<Message> messages) {
         StringBuilder messageBody = new StringBuilder();

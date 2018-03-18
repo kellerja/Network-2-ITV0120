@@ -100,8 +100,7 @@ public class MessagesHandler implements HttpHandler {
                     os.flush();
                     os.close();
 
-                    int responseCode = httpURLConnection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                    if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
                         String[] data = new String(dataBytes).split("\n");
