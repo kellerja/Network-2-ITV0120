@@ -3,22 +3,19 @@ package network_applications_2;
 import com.sun.net.httpserver.HttpServer;
 import network_applications_2.block.BlockHandler;
 import network_applications_2.block.BlockManager;
-import network_applications_2.connections.Connection;
 import network_applications_2.connections.ConnectionsHandler;
 import network_applications_2.connections.PingPongHandler;
-import network_applications_2.message.Message;
 import network_applications_2.message.MessagesHandler;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.*;
-import java.util.List;
 
 public class Application {
 
     private int port;
     private ConnectionsHandler connectionsHandler;
+    private MessagesHandler messagesHandler;
+    private BlockHandler blockHandler;
     private HttpServer server;
 
     public Application(int port) throws IOException {
@@ -26,6 +23,7 @@ public class Application {
         setUpServer();
         server.start();
         connectionsHandler.updateConnections();
+        connectionsHandler.requestConnections(true, -1);
     }
 
     private void setUpServer() throws IOException {
@@ -34,10 +32,12 @@ public class Application {
         server.createContext("/test", new MyHandler()); //Maybe no need for that anymore?
         server.createContext("/test/ping", new PingPongHandler());
         server.createContext("/", new MyHandler());
-        server.createContext("/messages", new MessagesHandler(this, blockManager));
+        messagesHandler = new MessagesHandler(this, blockManager);
+        server.createContext("/messages", messagesHandler);
         connectionsHandler = new ConnectionsHandler();
         server.createContext("/connections", connectionsHandler);
-        server.createContext("/blocks", new BlockHandler());
+        blockHandler = new BlockHandler();
+        server.createContext("/blocks", blockHandler);
         server.setExecutor(null);
     }
 

@@ -7,7 +7,9 @@ import network_applications_2.Utilities;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,7 +59,7 @@ public class ConnectionsHandler implements HttpHandler {
             body = httpExchange.getRequestURI().getQuery().split("&");
         }
         boolean isAlive = false;
-        int count = 1;
+        int count = 0;
 
         for (String line : body) {
             String[] element = line.split("=");
@@ -91,6 +93,23 @@ public class ConnectionsHandler implements HttpHandler {
     public void handle(HttpExchange httpExchange) throws IOException {
         if (httpExchange.getRequestMethod().equals("GET")) {
             handleGetRequest(httpExchange);
+        }
+    }
+
+    public void requestConnections(boolean isAlive, int count) {
+        String state = isAlive ? "alive" : "all";
+        String countValue = count <= 0 ? "infinity" : Integer.toString(count);
+        for (Connection connection: connections) {
+            new Thread(() -> {
+                try {
+                    URL url = new URL(connection.getUrl() + "/connections");
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                } catch (ConnectException e) {
+                    connection.testConnection();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
         }
     }
 }
