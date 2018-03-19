@@ -105,6 +105,7 @@ public class BlockHandler implements HttpHandler {
                     URL url = new URL(connection.getUrl() + "/blocks");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("POST");
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
 
                     httpURLConnection.setDoOutput(true);
                     OutputStream os = httpURLConnection.getOutputStream();

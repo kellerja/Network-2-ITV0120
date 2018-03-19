@@ -47,7 +47,7 @@ public class Application {
         server.createContext("/", new MyHandler());
         messagesHandler = new MessagesHandler(this, blockManager);
         server.createContext("/messages", messagesHandler);
-        connectionsHandler = new ConnectionsHandler();
+        connectionsHandler = new ConnectionsHandler(this);
         server.createContext("/connections", connectionsHandler);
         blockHandler = new BlockHandler(this);
         server.createContext("/blocks", blockHandler);

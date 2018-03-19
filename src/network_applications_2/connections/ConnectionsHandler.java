@@ -2,6 +2,7 @@ package network_applications_2.connections;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import network_applications_2.Application;
 import network_applications_2.Utilities;
 
 import java.io.File;
@@ -11,6 +12,7 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -18,14 +20,22 @@ import java.util.stream.Collectors;
 
 public class ConnectionsHandler implements HttpHandler {
 
+    private Application application;
     private List<Connection> connections;
+
+    public ConnectionsHandler(Application application) {
+        this.application = application;
+    }
 
     public List<Connection> getConnections() {
         return connections;
     }
 
     public void addIncomingConnection(HttpExchange httpExchange) {
-        Connection connection = new Connection(httpExchange.getRemoteAddress().toString());
+        List<String> headers = httpExchange.getRequestHeaders().get("Port");
+        String port = "8000";
+        if (headers != null && headers.size() > 0) port = headers.get(0);
+        Connection connection = new Connection(httpExchange.getRemoteAddress().getAddress().toString() + ":" + port);
         if (connections.contains(connection)) {
             int id = connections.indexOf(connection);
             connections.get(id).testConnection();
@@ -118,6 +128,7 @@ public class ConnectionsHandler implements HttpHandler {
                     URL url = new URL(connection.getUrl() + "/connections?state=" + state + "&count=" + countValue);
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("GET");
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
 
                     int responseCode = httpURLConnection.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
