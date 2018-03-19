@@ -2,12 +2,19 @@ package network_applications_2.connections;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import network_applications_2.Application;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 
 public class PingPongHandler implements HttpHandler {
+
+    private Application application;
+
+    public PingPongHandler(Application application) {
+        this.application = application;
+    }
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
         String query = httpExchange.getRequestURI().toASCIIString();
@@ -21,6 +28,7 @@ public class PingPongHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.getBytes());
         }
+        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
     @Override

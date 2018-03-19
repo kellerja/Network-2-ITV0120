@@ -43,7 +43,7 @@ public class Application {
         BlockManager blockManager = new BlockManager();
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/test", new MyHandler()); //Maybe no need for that anymore?
-        server.createContext("/test/ping", new PingPongHandler());
+        server.createContext("/test/ping", new PingPongHandler(this));
         server.createContext("/", new MyHandler());
         messagesHandler = new MessagesHandler(this, blockManager);
         server.createContext("/messages", messagesHandler);

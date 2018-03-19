@@ -41,6 +41,7 @@ public class BlockHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.toString().getBytes());
         }
+        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
@@ -68,6 +69,7 @@ public class BlockHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.toString().getBytes());
         }
+        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
     @Override

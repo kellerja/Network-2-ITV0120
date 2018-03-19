@@ -24,6 +24,16 @@ public class ConnectionsHandler implements HttpHandler {
         return connections;
     }
 
+    public void addIncomingConnection(HttpExchange httpExchange) {
+        Connection connection = new Connection(httpExchange.getRemoteAddress().toString());
+        if (connections.contains(connection)) {
+            int id = connections.indexOf(connection);
+            connections.get(id).testConnection();
+        } else {
+            connections.add(connection);
+        }
+    }
+
     private String getConnectionsString(boolean isAlive, int count) {
         StringBuilder stringBuilder = new StringBuilder();
         if (count == 0 || count > connections.size()) count = connections.size();
@@ -89,6 +99,7 @@ public class ConnectionsHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.getBytes());
         }
+        addIncomingConnection(httpExchange);
     }
 
     @Override
