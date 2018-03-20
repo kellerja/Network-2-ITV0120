@@ -16,7 +16,6 @@ import java.util.*;
 
 public class BlockHandler implements HttpHandler {
 
-    private static Set<Block> blocks = Collections.synchronizedSet(new TreeSet<>());
     private Application application;
 
     public BlockHandler(Application application) {
@@ -26,7 +25,7 @@ public class BlockHandler implements HttpHandler {
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
         System.out.println(httpExchange.getRequestURI().getPath());
         StringBuilder response = new StringBuilder();
-        for (Block block : blocks) {
+        for (Block block : BlockManager.blocks) {
             response.append(block.getHash()).append("|").append(block.getPreviousHash()).append("|").append(block.getTimestamp()).append("|");
             for (int i = 0; i < block.getMessages().size(); i++) {
                 Message message = block.getMessages().get(i);
@@ -51,10 +50,10 @@ public class BlockHandler implements HttpHandler {
             try {
                 Block block = BlockManager.parseBlock(possibleBlock);
                 response.append("Block ").append(possibleBlock).append(" saved\n");
-                if (blocks.contains(block)) {
+                if (BlockManager.blocks.contains(block)) {
                     continue;
                 }
-                blocks.add(block);
+                BlockManager.blocks.add(block);
                 newBlocks.add(block);
             } catch (BlockFormatException | MessageFormatException e) {
                 response.append("Block ").append(possibleBlock).append(" malformed with error ").append(e.getMessage()).append("\n");
@@ -148,10 +147,10 @@ public class BlockHandler implements HttpHandler {
                         for (String line: data) {
                             if ("".equals(line)) continue;
                             Block block = BlockManager.parseBlock(line);
-                            if (blocks.contains(block)) {
+                            if (BlockManager.blocks.contains(block)) {
                                 continue;
                             }
-                            blocks.add(block);
+                            BlockManager.blocks.add(block);
                         }
                     }
                     httpURLConnection.disconnect();
@@ -163,43 +162,4 @@ public class BlockHandler implements HttpHandler {
             }).start();
         }
     }
-
-    /*public void floodMessage(List<Message> messages) {
-        StringBuilder messageBody = new StringBuilder();
-        for (Message message: messages) {
-            messageBody.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
-        }
-        for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
-            new Thread(() -> {
-                try {
-                    URL url = new URL(connection.getUrl() + "/messages");
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    httpURLConnection.setRequestMethod("POST");
-
-                    httpURLConnection.setDoOutput(true);
-                    OutputStream os = httpURLConnection.getOutputStream();
-                    os.write(messageBody.toString().getBytes());
-                    os.flush();
-                    os.close();
-
-                    int responseCode = httpURLConnection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        InputStream is = httpURLConnection.getInputStream();
-                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\n");
-                        for (String line: data) {
-                            if (!line.matches("^Message .*,.* saved$")) {
-                                System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
-                            }
-                        }
-                    }
-                    httpURLConnection.disconnect();
-                } catch (ConnectException e) {
-                    connection.testConnection();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        }
-    }*/
 }

@@ -9,13 +9,13 @@ import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.LongSummaryStatistics;
 import java.util.Set;
 
 public class BlockManager implements MessagesFullEvent {
 
-    List<Block> blocks = new ArrayList<>();
+    static List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
 
     public void createBlock(List<Message> messages) {
         String lastHash = ""; // TODO Save blocks to file instead of list
@@ -111,8 +111,8 @@ public class BlockManager implements MessagesFullEvent {
         blockHandler.createBlock(messages2);
         blockHandler.createBlock(messages3);
 
-        for (int i = 0; i < blockHandler.blocks.size(); i++) {
-            Block block = blockHandler.blocks.get(i);
+        for (int i = 0; i < blocks.size(); i++) {
+            Block block = blocks.get(i);
             System.out.println("BLOCK " + i);
             System.out.println(block.getTimestamp());
             System.out.println("Previous hash: " + block.getPreviousHash());

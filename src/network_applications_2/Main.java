@@ -22,7 +22,7 @@ public class Main {
             }
         }
         System.out.println("Starting application");
-        Application application = new Application(port);
+        Application application = new Application("127.0.0.1", port);
         System.out.println("Application started");
         System.out.println("Num of connections: " + application.getConnectionsHandler().getConnections().size());
         System.out.println("Num of connections alive: " + application.getConnectionsHandler().getConnections().stream().filter(Connection::isAlive).count());

@@ -40,7 +40,7 @@ public class MessagesHandler implements HttpHandler {
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
-        String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\n");
+        String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\\R");
         StringBuilder response = new StringBuilder();
         List<Message> newMessages = new ArrayList<>();
         for (String possibleMessage: messageBody) {
@@ -91,6 +91,9 @@ public class MessagesHandler implements HttpHandler {
             messageBody.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
         }
         for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
+            if (connection.getUrl().equals("http://" + application.getHost() + ":" + application.getPort())) {
+                continue;
+            }
             new Thread(() -> {
                 try {
                     URL url = new URL(connection.getUrl() + "/messages");

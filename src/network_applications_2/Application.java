@@ -15,13 +15,15 @@ import java.util.concurrent.TimeUnit;
 
 public class Application {
 
+    private String host;
     private int port;
     private ConnectionsHandler connectionsHandler;
     private MessagesHandler messagesHandler;
     private BlockHandler blockHandler;
     private HttpServer server;
 
-    public Application(int port) throws IOException {
+    public Application(String host, int port) throws IOException {
+        this.host = host;
         this.port = port;
         setUpServer();
         server.start();
@@ -41,7 +43,7 @@ public class Application {
 
     private void setUpServer() throws IOException {
         BlockManager blockManager = new BlockManager();
-        server = HttpServer.create(new InetSocketAddress(port), 0);
+        server = HttpServer.create(new InetSocketAddress(host, port), 0);
         server.createContext("/test", new MyHandler()); //Maybe no need for that anymore?
         server.createContext("/test/ping", new PingPongHandler(this));
         server.createContext("/", new MyHandler());
@@ -56,6 +58,10 @@ public class Application {
 
     public int getPort() {
         return port;
+    }
+
+    public String getHost() {
+        return host;
     }
 
     public ConnectionsHandler getConnectionsHandler() {
