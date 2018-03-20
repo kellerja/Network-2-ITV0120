@@ -98,6 +98,9 @@ public class BlockHandler implements HttpHandler {
         }
         System.out.println(blockBody.toString());
         for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
+            if (connection.getUrl().equals("http://" + application.getHost() + ":" + application.getPort())) {
+                continue;
+            }
             new Thread(() -> {
                 try {
                     URL url = new URL(connection.getUrl() + "/blocks");
