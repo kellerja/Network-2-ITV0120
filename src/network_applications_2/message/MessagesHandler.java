@@ -37,7 +37,6 @@ public class MessagesHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.toString().getBytes());
         }
-        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
@@ -71,7 +70,6 @@ public class MessagesHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.toString().getBytes());
         }
-        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
     @Override
@@ -84,6 +82,7 @@ public class MessagesHandler implements HttpHandler {
                 handlePostRequest(httpExchange);
                 break;
         }
+        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
     public void floodMessage(List<Message> messages) {

@@ -28,11 +28,11 @@ public class PingPongHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.getBytes());
         }
-        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         handleGetRequest(httpExchange);
+        application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 }

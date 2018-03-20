@@ -10,6 +10,7 @@ import java.io.OutputStream;
 class MyHandler implements HttpHandler {
 
     private void handleRequest(HttpExchange t) throws IOException {
+        /*
         System.out.println(t.getRequestURI().toASCIIString());
         System.out.println(t.getRequestURI().getQuery());
         System.out.println(t.getRequestMethod());
@@ -17,13 +18,19 @@ class MyHandler implements HttpHandler {
         System.out.println(t.getRemoteAddress().getPort());
         for (String header: t.getRequestHeaders().keySet()) {
             System.out.println(header + ": " + t.getRequestHeaders().get(header));
-        }
+        }*/
         InputStream is = t.getRequestBody();
         String data = new String(Utilities.inputStream2ByteArray(is));
-        System.out.println("DATA " + data);
+        is.close();
+        //System.out.println("DATA " + data);
     }
 
     private void handleResponse(HttpExchange t) throws IOException {
+        if (t.getRequestMethod().equals("HEAD")) {
+            t.sendResponseHeaders(200, -1);
+            t.close();
+            return;
+        }
         String response = "This is the response";
         t.sendResponseHeaders(200, response.length());
         try (OutputStream os = t.getResponseBody()) {

@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -31,16 +30,17 @@ public class ConnectionsHandler implements HttpHandler {
         return connections;
     }
 
-    public void addIncomingConnection(HttpExchange httpExchange) {
+    public void addIncomingConnection(HttpExchange httpExchange) throws IOException {
         List<String> headers = httpExchange.getRequestHeaders().get("Port");
         String port = "8000";
         if (headers != null && headers.size() > 0) port = headers.get(0);
-        Connection connection = new Connection(httpExchange.getRemoteAddress().getAddress().toString() + ":" + port);
-        if (connections.contains(connection)) {
-            int id = connections.indexOf(connection);
-            connections.get(id).testConnection();
-        } else {
+        if (httpExchange.getLocalAddress().getHostString().equals(httpExchange.getRemoteAddress().getHostString()) && port.equals(Integer.toString(application.getPort()))) {
+            return;
+        }
+        Connection connection = new Connection("http://" + httpExchange.getRemoteAddress().getHostString() + ":" + port);
+        if (!connections.contains(connection)) {
             connections.add(connection);
+            Utilities.writeConnectionToFile(connection, new File("resources/KnownHosts.csv"));
         }
     }
 
@@ -53,10 +53,6 @@ public class ConnectionsHandler implements HttpHandler {
             }
         }
         return stringBuilder.toString();
-    }
-
-    public ConnectionsHandler() {
-
     }
 
     public List<Connection> getAliveConnections() {
@@ -109,7 +105,6 @@ public class ConnectionsHandler implements HttpHandler {
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.getBytes());
         }
-        addIncomingConnection(httpExchange);
     }
 
     @Override
@@ -117,6 +112,7 @@ public class ConnectionsHandler implements HttpHandler {
         if (httpExchange.getRequestMethod().equals("GET")) {
             handleGetRequest(httpExchange);
         }
+        addIncomingConnection(httpExchange);
     }
 
     public void requestConnections(boolean isAlive, int count) {
