@@ -43,7 +43,7 @@ public class BlockHandler implements HttpHandler {
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
-        String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\n");
+        String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\\R");
         StringBuilder response = new StringBuilder();
         List<Block> newBlocks = new ArrayList<>();
         for (String possibleBlock : messageBody) {
@@ -118,7 +118,7 @@ public class BlockHandler implements HttpHandler {
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\n");
+                        String[] data = new String(dataBytes).split("\\R");
                         for (String line : data) {
                             if (!line.matches("^Block .*,.* saved$")) {
                                 System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
@@ -146,7 +146,7 @@ public class BlockHandler implements HttpHandler {
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\n");
+                        String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
                             if ("".equals(line)) continue;
                             Block block = BlockManager.parseBlock(line);

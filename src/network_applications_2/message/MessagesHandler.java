@@ -110,7 +110,7 @@ public class MessagesHandler implements HttpHandler {
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\n");
+                        String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
                             if (!line.matches("^Message .*,.* saved$")) {
                                 System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
@@ -138,7 +138,7 @@ public class MessagesHandler implements HttpHandler {
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\n");
+                        String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
                             if ("".equals(line)) continue;
                             Message message = Message.parseMessage(line);

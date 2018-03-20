@@ -130,7 +130,7 @@ public class ConnectionsHandler implements HttpHandler {
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\n");
+                        String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
                             Connection newConnection = new Connection(line);
                             if (connections.contains(newConnection)) {
