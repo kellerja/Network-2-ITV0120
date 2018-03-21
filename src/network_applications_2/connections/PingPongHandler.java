@@ -23,7 +23,7 @@ public class PingPongHandler implements HttpHandler {
             throw new IOException("Not correct test"); //Might need a better solution.
         }
 
-        String response = "pong";
+        String response = "pong\n";
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.getBytes());

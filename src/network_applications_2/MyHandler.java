@@ -31,7 +31,7 @@ class MyHandler implements HttpHandler {
             t.close();
             return;
         }
-        String response = "This is the response";
+        String response = "This is the response\n";
         t.sendResponseHeaders(200, response.length());
         try (OutputStream os = t.getResponseBody()) {
             os.write(response.getBytes());
