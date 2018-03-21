@@ -3,7 +3,6 @@ package network_applications_2;
 import network_applications_2.connections.Connection;
 
 import java.io.*;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,13 +22,15 @@ public class Utilities {
         return buffer.toByteArray();
     }
 
-    public static List<Connection> getConnectionsFromFiles(List<File> files) throws IOException {
+    public static List<Connection> getConnectionsFromFiles(List<File> files, Application application) throws IOException {
         List<Connection> connections = new ArrayList<>();
         for (File file: files) {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
             while ((line = reader.readLine()) != null) {
-                connections.add(new Connection(line));
+                Connection connection = Connection.parseConnection(line, application);
+                if (connection == null) continue;
+                connections.add(connection);
             }
             reader.close();
         }

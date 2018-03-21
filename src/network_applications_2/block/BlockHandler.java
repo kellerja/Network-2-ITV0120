@@ -6,7 +6,6 @@ import network_applications_2.Application;
 import network_applications_2.Utilities;
 import network_applications_2.connections.Connection;
 import network_applications_2.connections.ConnectionsHandler;
-import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
 
 import java.io.IOException;
@@ -15,6 +14,7 @@ import java.io.OutputStream;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BlockHandler implements HttpHandler {
 
@@ -25,21 +25,12 @@ public class BlockHandler implements HttpHandler {
     }
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
-        StringBuilder response = new StringBuilder();
-        for (Block block : BlockManager.blocks) {
-            response.append(block.getHash()).append("|").append(block.getPreviousHash()).append("|").append(block.getTimestamp()).append("|");
-            for (int i = 0; i < block.getMessages().size(); i++) {
-                Message message = block.getMessages().get(i);
-                response.append(message.getTimestamp()).append(",").append(message.getData());
-                if (i != block.getMessages().size() - 1) {
-                    response.append(";");
-                }
-            }
-            response.append("\n");
-        }
+        String response = BlockManager.blocks.stream()
+                .map(Block::getStorageString)
+                .collect(Collectors.joining("\n")) + "\n";
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
-            os.write(response.toString().getBytes());
+            os.write(response.getBytes());
         }
     }
 
@@ -50,7 +41,7 @@ public class BlockHandler implements HttpHandler {
         for (String possibleBlock : messageBody) {
             try {
                 Block block = BlockManager.parseBlock(possibleBlock);
-                response.append("Block ").append(possibleBlock).append(" saved\n");
+                response.append("Block ").append(possibleBlock).append(" saved").append("\n");
                 if (BlockManager.blocks.contains(block)) {
                     continue;
                 }
@@ -80,28 +71,22 @@ public class BlockHandler implements HttpHandler {
             case "POST":
                 handlePostRequest(httpExchange);
                 break;
+            default:
+                String response = "Method " + httpExchange.getRequestMethod() + " not supported for resource " + httpExchange.getRequestURI().getQuery();
+                httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_METHOD, response.length());
+                try (OutputStream os = httpExchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
         }
         application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
 
 
     public void floodBlocks(List<Block> blocks) {
-        StringBuilder blockBody = new StringBuilder();
-        for (Block block : blocks) {
-            blockBody.append(block.getHash()).append("|").append(block.getPreviousHash()).append("|").append(block.getTimestamp()).append("|");
-            for (int i = 0; i < block.getMessages().size(); i++) {
-                Message message = block.getMessages().get(i);
-                blockBody.append(message.getTimestamp()).append(",").append(message.getData());
-                if (i != block.getMessages().size() - 1) {
-                    blockBody.append(";");
-                }
-            }
-            blockBody.append("\n");
-        }
+        String blockBody = blocks.stream()
+                .map(Block::getStorageString)
+                .collect(Collectors.joining("\n")) + "\n";
         for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
-            if (connection.getUrl().equals("http://" + application.getHost() + ":" + application.getPort())) {
-                continue;
-            }
             new Thread(() -> {
                 try {
                     URL url = new URL(connection.getUrl() + "/blocks");
@@ -110,23 +95,22 @@ public class BlockHandler implements HttpHandler {
                     httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
 
                     httpURLConnection.setDoOutput(true);
-                    OutputStream os = httpURLConnection.getOutputStream();
-                    os.write(blockBody.toString().getBytes());
-                    os.flush();
-                    os.close();
+                    try (OutputStream os = httpURLConnection.getOutputStream()) {
+                        os.write(blockBody.getBytes());
+                    }
 
-                    int responseCode = httpURLConnection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                    if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
-                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\\R");
+                        String[] data = new String(Utilities.inputStream2ByteArray(is)).split("\\R");
                         for (String line : data) {
-                            if (!line.matches("^Block .*,.* saved$")) {
+                            if (!line.matches("^Block .* saved$")) {
                                 System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
                             }
                         }
                     }
                     httpURLConnection.disconnect();
+                } catch (ConnectException e) {
+                    connection.testConnection();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -147,10 +131,8 @@ public class BlockHandler implements HttpHandler {
 
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
-                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\\R");
+                        String[] data = new String(Utilities.inputStream2ByteArray(is)).split("\\R");
                         for (String line: data) {
-                            if ("".equals(line)) continue;
                             Block block = BlockManager.parseBlock(line);
                             if (BlockManager.blocks.contains(block)) {
                                 continue;

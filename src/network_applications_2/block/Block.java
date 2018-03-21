@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Block implements Comparable<Block>, Serializable {
 
@@ -58,6 +59,11 @@ public class Block implements Comparable<Block>, Serializable {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public String getStorageString() {
+        return getHash() + "|" + getPreviousHash() + "|" + getTimestamp() + "|" +
+                getMessages().stream().map(Message::getStorageString).collect(Collectors.joining(";"));
     }
 
 

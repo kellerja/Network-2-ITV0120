@@ -16,7 +16,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class MessagesHandler implements HttpHandler {
 
@@ -34,7 +33,7 @@ public class MessagesHandler implements HttpHandler {
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
         StringBuilder response = new StringBuilder();
         for (Message message: messages) {
-            response.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
+            response.append(message.getStorageString()).append("\n");
         }
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
@@ -42,17 +41,19 @@ public class MessagesHandler implements HttpHandler {
         }
     }
 
-    private void handlePostRequest(HttpExchange httpExchange) throws IOException {
-        String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\\R");
+    private boolean isMessageAlreadySaved(Message message) {
+        return messages.contains(message) ||
+                BlockManager.getBlocks().parallelStream()
+                        .anyMatch(block -> block.getMessages().contains(message));
+    }
+
+    private String buildPostResponseString(String[] messageBody, List<Message> newMessages) {
         StringBuilder response = new StringBuilder();
-        List<Message> newMessages = new ArrayList<>();
         for (String possibleMessage: messageBody) {
             try {
                 Message message = Message.parseMessage(possibleMessage);
                 response.append("Message ").append(possibleMessage).append(" saved\n");
-                if(messages.contains(message) ||
-                        BlockManager.getBlocks().parallelStream()
-                                .anyMatch(block -> block.getMessages().contains(message))) {
+                if(isMessageAlreadySaved(message)) {
                     continue;
                 }
                 messages.add(message);
@@ -61,6 +62,13 @@ public class MessagesHandler implements HttpHandler {
                 response.append("Message ").append(possibleMessage).append(" malformed with error ").append(e.getMessage()).append("\n");
             }
         }
+        return response.toString();
+    }
+
+    private void handlePostRequest(HttpExchange httpExchange) throws IOException {
+        String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\\R");
+        List<Message> newMessages = new ArrayList<>();
+        String response = buildPostResponseString(messageBody, newMessages);
 
         if (newMessages.size() > 0) {
             floodMessage(newMessages);
@@ -73,7 +81,7 @@ public class MessagesHandler implements HttpHandler {
 
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
-            os.write(response.toString().getBytes());
+            os.write(response.getBytes());
         }
     }
 
@@ -87,6 +95,12 @@ public class MessagesHandler implements HttpHandler {
             case "POST":
                 handlePostRequest(httpExchange);
                 break;
+            default:
+                String response = "Method " + httpExchange.getRequestMethod() + " not supported for resource " + httpExchange.getRequestURI().getQuery();
+                httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_METHOD, response.length());
+                try (OutputStream os = httpExchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
         }
         application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }
@@ -94,12 +108,9 @@ public class MessagesHandler implements HttpHandler {
     public void floodMessage(List<Message> messages) {
         StringBuilder messageBody = new StringBuilder();
         for (Message message: messages) {
-            messageBody.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
+            messageBody.append(message.getStorageString()).append("\n");
         }
         for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
-            if (connection.getUrl().equals("http://" + application.getHost() + ":" + application.getPort())) {
-                continue;
-            }
             new Thread(() -> {
                 try {
                     URL url = new URL(connection.getUrl() + "/messages");
@@ -108,15 +119,13 @@ public class MessagesHandler implements HttpHandler {
                     httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
 
                     httpURLConnection.setDoOutput(true);
-                    OutputStream os = httpURLConnection.getOutputStream();
-                    os.write(messageBody.toString().getBytes());
-                    os.flush();
-                    os.close();
+                    try (OutputStream os = httpURLConnection.getOutputStream()) {
+                        os.write(messageBody.toString().getBytes());
+                    }
 
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
-                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\\R");
+                        String[] data = new String(Utilities.inputStream2ByteArray(is)).split("\\R");
                         for (String line: data) {
                             if (!line.matches("^Message .*,.* saved$")) {
                                 System.out.println("ERROR Message sent to " + connection.getUrl() + " failed: " + line);
@@ -144,12 +153,11 @@ public class MessagesHandler implements HttpHandler {
 
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
-                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
-                        String[] data = new String(dataBytes).split("\\R");
+                        String[] data = new String(Utilities.inputStream2ByteArray(is)).split("\\R");
                         for (String line: data) {
-                            if ("".equals(line)) continue;
+                            if (line == null || "".equals(line.trim())) continue;
                             Message message = Message.parseMessage(line);
-                            if (messages.contains(message)) {
+                            if (isMessageAlreadySaved(message)) {
                                 continue;
                             }
                             messages.add(message);

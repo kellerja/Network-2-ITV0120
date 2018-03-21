@@ -19,13 +19,14 @@ public class PingPongHandler implements HttpHandler {
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
         String query = httpExchange.getRequestURI().toASCIIString();
+        String response = "pong\n";
+        int responseCode = HttpURLConnection.HTTP_OK;
         if (!query.equals("/test/ping")) {
-            httpExchange.close();
-            throw new IOException("Not correct test"); //Might need a better solution.
+            response = "Expected '/test/ping' but received '" + httpExchange.getRequestURI().getQuery() + "'";
+            responseCode = HttpURLConnection.HTTP_BAD_REQUEST;
         }
 
-        String response = "pong\n";
-        httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
+        httpExchange.sendResponseHeaders(responseCode, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.getBytes());
         }

@@ -34,6 +34,10 @@ public class Message implements Comparable<Message>, Serializable {
         return data;
     }
 
+    public String getStorageString() {
+        return timestamp + "," + data;
+    }
+
     @Override
     public int compareTo(Message o) {
         if (o == null) return -1;

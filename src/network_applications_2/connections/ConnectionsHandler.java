@@ -13,9 +13,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConnectionsHandler implements HttpHandler {
@@ -33,10 +31,13 @@ public class ConnectionsHandler implements HttpHandler {
 
     public void addIncomingConnection(HttpExchange httpExchange) throws IOException {
         String port = getPort(httpExchange);
-        if (port.equals("") || (httpExchange.getLocalAddress().getHostString().equals(httpExchange.getRemoteAddress().getHostString()) && port.equals(Integer.toString(application.getPort())))) {
+        if (port.equals("")) {
             return;
         }
-        Connection connection = new Connection("http://" + httpExchange.getRemoteAddress().getHostString() + ":" + port);
+        Connection connection = Connection.parseConnection("http://" + httpExchange.getRemoteAddress().getHostString() + ":" + port, application);
+        if (connection == null) {
+            return;
+        }
         int connectionIndex = connections.indexOf(connection);
         if (connectionIndex == -1) {
             connections.add(connection);
@@ -49,11 +50,10 @@ public class ConnectionsHandler implements HttpHandler {
     private String getConnectionsString(boolean isAlive, int count) {
         StringBuilder stringBuilder = new StringBuilder();
         if (count == 0 || count > connections.size()) count = connections.size();
-        for (int i = 0; i < count; i++) {
-            if (!isAlive || connections.get(i).isAlive()) {
-                stringBuilder.append(connections.get(i).getUrl()).append("\n");
-            }
-        }
+        connections.stream()
+                .filter(connection -> !isAlive || connection.isAlive())
+                .limit(count)
+                .forEach(connection -> stringBuilder.append(connection.getUrl()).append("\n"));
         return stringBuilder.toString();
     }
 
@@ -63,44 +63,64 @@ public class ConnectionsHandler implements HttpHandler {
 
     public void updateConnections() {
         try {
-            connections = Collections.synchronizedList(Utilities.getConnectionsFromFiles(Arrays.asList(
-                    new File("resources/DefaultHosts.csv"),
-                    new File("resources/KnownHosts.csv"))
+            connections = Collections.synchronizedList(Utilities.getConnectionsFromFiles(
+                    Arrays.asList(
+                        new File("resources/DefaultHosts.csv"),
+                        new File("resources/KnownHosts.csv")
+                    ), application
             ));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private Map<String, String> parseQueryString(String queryString) {
+        if (queryString == null) {
+            return null;
+        }
+        Map<String, String> query = new HashMap<>();
+        String[] queryParts = queryString.split("&");
+        for (String part: queryParts) {
+            String[] keyValue = part.split("=");
+            if (keyValue.length != 2 || keyValue[0].trim().equals("") || keyValue[1].trim().equals("")) continue;
+            query.put(keyValue[0], keyValue[1]);
+        }
+        return query;
+    }
+
+    private boolean parseIsAlive(Map<String, String> query, boolean isAliveDefault) {
+        final String expectedKey = "state";
+        boolean isAlive = isAliveDefault;
+        if (!query.containsKey(expectedKey)) {
+            isAlive = isAliveDefault;
+        } else if (query.get(expectedKey).equals("alive")) {
+            isAlive = true;
+        }
+        return isAlive;
+    }
+
+    private int parseCount(Map<String, String> query, int countDefault) {
+        final String expectedKey = "count";
+        int count;
+        if (!query.containsKey(expectedKey)) {
+            count = countDefault;
+        } else if (query.get(expectedKey).equals("infinity")) {
+            count = 0;
+        } else {
+            try {
+                count = Math.max(Integer.parseInt(query.get(expectedKey)), 0);
+            } catch (NumberFormatException e) {
+                count = 0;
+            }
+        }
+        return count;
+    }
+
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
-        String query = httpExchange.getRequestURI().getQuery();
-        String[] body = new String[0];
-        if (query != null) {
-            body = httpExchange.getRequestURI().getQuery().split("&");
-        }
-        boolean isAlive = false;
-        int count = 0;
+        Map<String, String> query = parseQueryString(httpExchange.getRequestURI().getQuery());
 
-        for (String line : body) {
-            String[] element = line.split("=");
-            if (element.length != 2) return;
-
-            if (element[0].equals("state")) {
-                String state = element[1];
-                if (state.equals("alive")) isAlive = true;
-            }
-            else if (element[0].equals("count")) {
-                String value = element[1];
-                if (value.equals("infinity")) count = 0; // Maybe it should not take in strings at all.
-                else {
-                    try {
-                        count = Math.max(Integer.parseInt(value), 0);
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
+        boolean isAlive = parseIsAlive(query, false);
+        int count = parseCount(query, 0);
 
         String response = getConnectionsString(isAlive, count);
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
@@ -112,8 +132,16 @@ public class ConnectionsHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         System.out.println(LocalDateTime.now().toString() + " " + httpExchange.getRequestURI().getPath() + " " + httpExchange.getRequestMethod() + " by " + httpExchange.getRemoteAddress().getHostString() + ":" + ConnectionsHandler.getPort(httpExchange));
-        if (httpExchange.getRequestMethod().equals("GET")) {
-            handleGetRequest(httpExchange);
+        switch (httpExchange.getRequestMethod()) {
+            case "GET":
+                handleGetRequest(httpExchange);
+                break;
+            default:
+                String response = "Method " + httpExchange.getRequestMethod() + " not supported for resource " + httpExchange.getRequestURI().getQuery();
+                httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_METHOD, response.length());
+                try (OutputStream os = httpExchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
         }
         addIncomingConnection(httpExchange);
     }
@@ -135,9 +163,8 @@ public class ConnectionsHandler implements HttpHandler {
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
                         String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
-                            if (line.trim().equals("")) continue;
-                            Connection newConnection = new Connection(line);
-                            if (connections.contains(newConnection)) {
+                            Connection newConnection = Connection.parseConnection(line, application);
+                            if (newConnection == null || connections.contains(newConnection)) {
                                 continue;
                             }
                             connections.add(newConnection);
