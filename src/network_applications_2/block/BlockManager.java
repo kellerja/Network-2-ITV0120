@@ -21,7 +21,14 @@ public class BlockManager implements MessagesFullEvent {
     public void createBlock(List<Message> messages) {
         String lastHash = ""; // TODO Save blocks to file instead of list
         if (!blocks.isEmpty()) {
-            lastHash = blocks.get(blocks.size() - 1).getHash();
+            Block lastBlock = blocks.get(blocks.size() - 1);
+            lastHash = lastBlock.getHash();
+            /*
+            Block tempBlock = new Block(lastBlock.getPreviousHash(), messages);
+            if (findHash(tempBlock).equals(lastHash)) {
+                return;
+            }
+            */
         }
         Block block = new Block(lastHash, messages);
         block.setHash(findHash(block));
@@ -112,6 +119,10 @@ public class BlockManager implements MessagesFullEvent {
             messagesList.add(Message.parseMessage(i));
         }
         return new Block(timestamp, prevHash, messagesList, newHash);
+    }
+
+    public static List<Block> getBlocks() {
+        return blocks;
     }
 
     public static void main(String[] args) {

@@ -64,9 +64,9 @@ public class Block implements Comparable<Block>, Serializable {
     @Override
     public int compareTo(Block o) {
         if (o == null) return -1;
-        int compare = 0;
-        if (!this.newHash.equals(o.getPreviousHash())) {
-            compare = Long.compare(this.timestamp, o.getTimestamp());
+        int compare = Long.compare(this.timestamp, o.getTimestamp());
+        if (this.newHash.equals(o.getHash())) {
+            compare = 0;
         }
         return compare;
     }

@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -31,16 +32,17 @@ public class ConnectionsHandler implements HttpHandler {
     }
 
     public void addIncomingConnection(HttpExchange httpExchange) throws IOException {
-        List<String> headers = httpExchange.getRequestHeaders().get("Port");
-        String port = "8000";
-        if (headers != null && headers.size() > 0) port = headers.get(0);
-        if (httpExchange.getLocalAddress().getHostString().equals(httpExchange.getRemoteAddress().getHostString()) && port.equals(Integer.toString(application.getPort()))) {
+        String port = getPort(httpExchange);
+        if (port.equals("") || (httpExchange.getLocalAddress().getHostString().equals(httpExchange.getRemoteAddress().getHostString()) && port.equals(Integer.toString(application.getPort())))) {
             return;
         }
         Connection connection = new Connection("http://" + httpExchange.getRemoteAddress().getHostString() + ":" + port);
-        if (!connections.contains(connection)) {
+        int connectionIndex = connections.indexOf(connection);
+        if (connectionIndex == -1) {
             connections.add(connection);
             Utilities.writeConnectionToFile(connection, new File("resources/KnownHosts.csv"));
+        } else {
+            connections.get(connectionIndex).testConnection();
         }
     }
 
@@ -109,6 +111,7 @@ public class ConnectionsHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
+        System.out.println(LocalDateTime.now().toString() + " " + httpExchange.getRequestURI().getPath() + " " + httpExchange.getRequestMethod() + " by " + httpExchange.getRemoteAddress().getHostString() + ":" + ConnectionsHandler.getPort(httpExchange));
         if (httpExchange.getRequestMethod().equals("GET")) {
             handleGetRequest(httpExchange);
         }
@@ -132,6 +135,7 @@ public class ConnectionsHandler implements HttpHandler {
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
                         String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
+                            if (line.trim().equals("")) continue;
                             Connection newConnection = new Connection(line);
                             if (connections.contains(newConnection)) {
                                 continue;
@@ -148,5 +152,12 @@ public class ConnectionsHandler implements HttpHandler {
                 }
             }).start();
         }
+    }
+
+    public static String getPort(HttpExchange httpExchange) {
+        List<String> headers = httpExchange.getRequestHeaders().get("Port");
+        String port = "";
+        if (headers != null && headers.size() > 0) port = headers.get(0);
+        return port;
     }
 }
