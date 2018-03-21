@@ -1,25 +1,33 @@
 package network_applications_2;
 
 
+import network_applications_2.message.Message;
+
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 public class MessageGenerator {
 
-    public void generateMessages(int messageAmount, String beginningDate) {
+    public List<Message> generateMessages(int messageAmount, String beginningDate) {
+        List<Message> msgs = new ArrayList<>();
         for (int i = 0; i < messageAmount; i++) {
             long timestamp = generateTimestamp(beginningDate);
             String name1 = generateName(3);
             String name2 = generateName(3);
             double tambergAmount = 0.1 + Math.random() * (10000 - 0.1);
-            writeToFile(timestamp + ", " + name1 + " -> " + name2 + " - " + tambergAmount + " TambergCoin");
+            String msg = name1 + " -> " + name2 + " - " + tambergAmount + " TambergCoin";
+            msgs.add(new Message(timestamp, msg));
+            writeToFile(timestamp + ", " + msg);
         }
+        return msgs;
     }
 
-    public void writeToFile(String msg) {
+    private void writeToFile(String msg) {
         System.out.println(msg);
         BufferedWriter bufferedWriter = null;
         try {
@@ -32,7 +40,7 @@ public class MessageGenerator {
         }
     }
 
-    public String generateName(int nameLength) {
+    private String generateName(int nameLength) {
         Random random = new Random();
         StringBuilder stringBuilder = new StringBuilder(nameLength);
         for (int i = 0; i < nameLength; i++) {
@@ -42,7 +50,7 @@ public class MessageGenerator {
         return stringBuilder.toString();
     }
 
-    public long generateTimestamp(String beginningDate) {
+    private long generateTimestamp(String beginningDate) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date date = null;
         try {

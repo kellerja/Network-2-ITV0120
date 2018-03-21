@@ -53,6 +53,8 @@ public class Application {
         server.createContext("/connections", connectionsHandler);
         blockHandler = new BlockHandler(this);
         server.createContext("/blocks", blockHandler);
+        server.createContext("/getblocks", blockHandler);
+        server.createContext("/getdata", blockHandler);
         server.setExecutor(null);
     }
 

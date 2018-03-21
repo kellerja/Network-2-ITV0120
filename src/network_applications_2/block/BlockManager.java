@@ -6,6 +6,7 @@ import network_applications_2.message.MessagesFullEvent;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
+import java.nio.Buffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -25,6 +26,41 @@ public class BlockManager implements MessagesFullEvent {
         Block block = new Block(lastHash, messages);
         block.setHash(findHash(block));
         blocks.add(block);
+        writeToFile(block);
+    }
+
+    private void writeToFile(Block block) {
+        String blockString = parseBlockToString(block);
+        System.out.println(blockString);
+        BufferedWriter bufferedWriter = null;
+        try {
+            bufferedWriter = new BufferedWriter(new FileWriter("resources/Blocks.csv", true));
+            bufferedWriter.write(blockString);
+            bufferedWriter.newLine();
+            bufferedWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String parseBlockToString(Block block) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(block.getHash())
+                .append("|")
+                .append(block.getPreviousHash())
+                .append("|")
+                .append(block.getTimestamp())
+                .append("|");
+        for (int i = 0; i < block.getMessages().size(); i++) {
+            Message message = block.getMessages().get(i);
+            stringBuilder.append(message.getTimestamp())
+                    .append(",")
+                    .append(message.getData());
+            if (i != block.getMessages().size() - 1) {
+                stringBuilder.append(";");
+            }
+        }
+        return stringBuilder.toString();
     }
 
     public String findHash(Block block) {

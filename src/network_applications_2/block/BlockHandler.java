@@ -24,22 +24,53 @@ public class BlockHandler implements HttpHandler {
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
         System.out.println(httpExchange.getRequestURI().getPath());
-        StringBuilder response = new StringBuilder();
-        for (Block block : BlockManager.blocks) {
-            response.append(block.getHash()).append("|").append(block.getPreviousHash()).append("|").append(block.getTimestamp()).append("|");
-            for (int i = 0; i < block.getMessages().size(); i++) {
-                Message message = block.getMessages().get(i);
-                response.append(message.getTimestamp()).append(",").append(message.getData());
-                if (i != block.getMessages().size() - 1) {
-                    response.append(";");
-                }
+        String[] data = httpExchange.getRequestURI().getPath().replaceFirst("^/", "").split("/");
+
+//        for (String i : data) {
+//            System.out.println("DATA " + i);
+//        }
+
+        List<Block> blocks = new ArrayList<>();
+        if (data.length == 1 && data[0].equals("getblocks")) {
+            blocks = getAllBlocks();
+        } else if (data.length == 2) {
+            if (data[0].equals("getblocks")) {
+                blocks = getAllBlocksStartingFrom(data[1]);
+            } else if (data[0].equals("getdata")) {
+                blocks = getSpecificBlock(data[1]);
             }
-            response.append("\n");
+        }
+
+        StringBuilder response = new StringBuilder();
+        for (Block block : blocks) {
+            response.append(BlockManager.parseBlockToString(block)).append("\n");
         }
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.toString().getBytes());
         }
+    }
+
+    private List<Block> getAllBlocks() {
+        return BlockManager.blocks;
+    }
+
+    private List<Block> getAllBlocksStartingFrom(String hash) {
+        List<Block> blocks = new ArrayList<>();
+        Block block = BlockManager.blocks.stream().filter(b -> hash.equals(b.getHash())).findFirst().orElse(null);
+        if (block != null) {
+            blocks = BlockManager.blocks.subList(BlockManager.blocks.indexOf(block), BlockManager.blocks.size());
+        }
+        return blocks;
+    }
+
+    private List<Block> getSpecificBlock(String hash) {
+        List<Block> blocks = new ArrayList<>();
+        Block block = BlockManager.blocks.stream().filter(b -> hash.equals(b.getHash())).findFirst().orElse(null);
+        if (block != null) {
+            blocks.add(block);
+        }
+        return blocks;
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
@@ -86,15 +117,7 @@ public class BlockHandler implements HttpHandler {
     public void floodBlocks(List<Block> blocks) {
         StringBuilder blockBody = new StringBuilder();
         for (Block block : blocks) {
-            blockBody.append(block.getHash()).append("|").append(block.getPreviousHash()).append("|").append(block.getTimestamp()).append("|");
-            for (int i = 0; i < block.getMessages().size(); i++) {
-                Message message = block.getMessages().get(i);
-                blockBody.append(message.getTimestamp()).append(",").append(message.getData());
-                if (i != block.getMessages().size() - 1) {
-                    blockBody.append(";");
-                }
-            }
-            blockBody.append("\n");
+            blockBody.append(BlockManager.parseBlockToString(block)).append("\n");
         }
         System.out.println(blockBody.toString());
         for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
@@ -146,6 +169,8 @@ public class BlockHandler implements HttpHandler {
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
+                        System.out.println("WHERE YOU AT");
+                        System.out.println(new String(dataBytes));
                         String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
                             if ("".equals(line)) continue;
