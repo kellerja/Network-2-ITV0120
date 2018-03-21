@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 import network_applications_2.Application;
 import network_applications_2.Utilities;
 import network_applications_2.connections.Connection;
+import network_applications_2.connections.ConnectionsHandler;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class BlockHandler implements HttpHandler {
@@ -23,7 +25,6 @@ public class BlockHandler implements HttpHandler {
     }
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
-        System.out.println(httpExchange.getRequestURI().getPath());
         StringBuilder response = new StringBuilder();
         for (Block block : BlockManager.blocks) {
             response.append(block.getHash()).append("|").append(block.getPreviousHash()).append("|").append(block.getTimestamp()).append("|");
@@ -71,6 +72,7 @@ public class BlockHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
+        System.out.println(LocalDateTime.now().toString() + " " + httpExchange.getRequestURI().getPath() + " " + httpExchange.getRequestMethod() + " by " + httpExchange.getRemoteAddress().getHostString() + ":" + ConnectionsHandler.getPort(httpExchange));
         switch (httpExchange.getRequestMethod()) {
             case "GET":
                 handleGetRequest(httpExchange);
@@ -96,7 +98,6 @@ public class BlockHandler implements HttpHandler {
             }
             blockBody.append("\n");
         }
-        System.out.println(blockBody.toString());
         for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
             if (connection.getUrl().equals("http://" + application.getHost() + ":" + application.getPort())) {
                 continue;
@@ -142,6 +143,7 @@ public class BlockHandler implements HttpHandler {
                     URL url = new URL(connection.getUrl() + "/blocks");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("GET");
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
 
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();

@@ -7,6 +7,7 @@ import network_applications_2.Application;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.time.LocalDateTime;
 
 public class PingPongHandler implements HttpHandler {
 
@@ -32,6 +33,7 @@ public class PingPongHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
+        System.out.println(LocalDateTime.now().toString() + " " + httpExchange.getRequestURI().getPath() + " " + httpExchange.getRequestMethod() + " by " + httpExchange.getRemoteAddress().getHostString() + ":" + ConnectionsHandler.getPort(httpExchange));
         handleGetRequest(httpExchange);
         application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }

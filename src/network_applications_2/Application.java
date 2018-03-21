@@ -20,6 +20,7 @@ public class Application {
     private ConnectionsHandler connectionsHandler;
     private MessagesHandler messagesHandler;
     private BlockHandler blockHandler;
+    private BlockManager blockManager;
     private HttpServer server;
 
     public Application(String host, int port) throws IOException {
@@ -42,7 +43,7 @@ public class Application {
     }
 
     private void setUpServer() throws IOException {
-        BlockManager blockManager = new BlockManager();
+        blockManager = new BlockManager();
         server = HttpServer.create(new InetSocketAddress(host, port), 0);
         server.createContext("/test", new MyHandler()); //Maybe no need for that anymore?
         server.createContext("/test/ping", new PingPongHandler(this));
@@ -53,7 +54,7 @@ public class Application {
         server.createContext("/connections", connectionsHandler);
         blockHandler = new BlockHandler(this);
         server.createContext("/blocks", blockHandler);
-        server.setExecutor(null);
+        server.setExecutor(Executors.newCachedThreadPool());
     }
 
     public int getPort() {
@@ -62,6 +63,10 @@ public class Application {
 
     public String getHost() {
         return host;
+    }
+
+    public BlockManager getBlockManager() {
+        return blockManager;
     }
 
     public ConnectionsHandler getConnectionsHandler() {

@@ -3,6 +3,7 @@ package network_applications_2;
 import network_applications_2.connections.Connection;
 
 import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 

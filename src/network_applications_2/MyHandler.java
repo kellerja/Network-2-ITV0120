@@ -2,10 +2,12 @@ package network_applications_2;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import network_applications_2.connections.ConnectionsHandler;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 
 class MyHandler implements HttpHandler {
 
@@ -18,11 +20,10 @@ class MyHandler implements HttpHandler {
         System.out.println(t.getRemoteAddress().getPort());
         for (String header: t.getRequestHeaders().keySet()) {
             System.out.println(header + ": " + t.getRequestHeaders().get(header));
-        }*/
+        }
         InputStream is = t.getRequestBody();
         String data = new String(Utilities.inputStream2ByteArray(is));
-        is.close();
-        //System.out.println("DATA " + data);
+        System.out.println("DATA " + data);*/
     }
 
     private void handleResponse(HttpExchange t) throws IOException {
@@ -39,8 +40,9 @@ class MyHandler implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange t) throws IOException {
-        handleRequest(t);
-        handleResponse(t);
+    public void handle(HttpExchange httpExchange) throws IOException {
+        //System.out.println(LocalDateTime.now().toString() + " " + httpExchange.getRequestURI().getPath() + " " + httpExchange.getRequestMethod() + " by " + httpExchange.getRemoteAddress().getHostString() + ":" + ConnectionsHandler.getPort(httpExchange));
+        handleRequest(httpExchange);
+        handleResponse(httpExchange);
     }
 }

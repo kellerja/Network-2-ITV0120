@@ -4,7 +4,9 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import network_applications_2.Application;
 import network_applications_2.Utilities;
+import network_applications_2.block.BlockManager;
 import network_applications_2.connections.Connection;
+import network_applications_2.connections.ConnectionsHandler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +14,9 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MessagesHandler implements HttpHandler {
 
@@ -28,7 +32,6 @@ public class MessagesHandler implements HttpHandler {
     }
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
-        System.out.println(httpExchange.getRequestURI().getPath());
         StringBuilder response = new StringBuilder();
         for (Message message: messages) {
             response.append(message.getTimestamp()).append(",").append(message.getData()).append("\n");
@@ -47,7 +50,9 @@ public class MessagesHandler implements HttpHandler {
             try {
                 Message message = Message.parseMessage(possibleMessage);
                 response.append("Message ").append(possibleMessage).append(" saved\n");
-                if(messages.contains(message)) {
+                if(messages.contains(message) ||
+                        BlockManager.getBlocks().parallelStream()
+                                .anyMatch(block -> block.getMessages().contains(message))) {
                     continue;
                 }
                 messages.add(message);
@@ -74,6 +79,7 @@ public class MessagesHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
+        System.out.println(LocalDateTime.now().toString() + " " + httpExchange.getRequestURI().getPath() + " " + httpExchange.getRequestMethod() + " by " + httpExchange.getRemoteAddress().getHostString() + ":" + ConnectionsHandler.getPort(httpExchange));
         switch (httpExchange.getRequestMethod()) {
             case "GET":
                 handleGetRequest(httpExchange);
@@ -134,6 +140,7 @@ public class MessagesHandler implements HttpHandler {
                     URL url = new URL(connection.getUrl() + "/messages");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("GET");
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
 
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();

@@ -9,8 +9,9 @@ import java.net.URL;
 public class Main {
 
     private static int DEFAULT_PORT = 8000;
+    private static String DEFAULT_HOSTNAME = "127.0.0.1";
 
-    public static void main(String[] args) throws IOException {
+    private static int parsePort(String[] args) {
         int port;
         if (args.length == 0) {
             port = DEFAULT_PORT;
@@ -21,8 +22,18 @@ public class Main {
                 port = DEFAULT_PORT;
             }
         }
-        System.out.println("Starting application");
-        Application application = new Application("127.0.0.1", port);
+        return port;
+    }
+
+    private static String parseHost(String[] args) {
+        return DEFAULT_HOSTNAME;
+    }
+
+    public static void main(String[] args) throws IOException {
+        int port = parsePort(args);
+        String host = parseHost(args);
+        System.out.println("Starting application on ip " + host + " with port " + port);
+        Application application = new Application(host, port);
         System.out.println("Application started");
         System.out.println("Num of connections: " + application.getConnectionsHandler().getConnections().size());
         System.out.println("Num of connections alive: " + application.getConnectionsHandler().getConnections().stream().filter(Connection::isAlive).count());
