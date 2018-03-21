@@ -34,7 +34,6 @@ public class PingPongHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
-        System.out.println(LocalDateTime.now().toString() + " " + httpExchange.getRequestURI().getPath() + " " + httpExchange.getRequestMethod() + " by " + httpExchange.getRemoteAddress().getHostString() + ":" + ConnectionsHandler.getPort(httpExchange));
         handleGetRequest(httpExchange);
         application.getConnectionsHandler().addIncomingConnection(httpExchange);
     }

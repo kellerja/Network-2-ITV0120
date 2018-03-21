@@ -1,12 +1,14 @@
 package network_applications_2;
 
 import com.sun.net.httpserver.HttpServer;
+import network_applications_2.block.BlockFormatException;
 import network_applications_2.block.BlockHandler;
 import network_applications_2.block.BlockManager;
 import network_applications_2.connections.Connection;
 import network_applications_2.connections.ConnectionsHandler;
 import network_applications_2.connections.PingPongHandler;
 import network_applications_2.error.ErrorHandler;
+import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.MessagesHandler;
 
 import java.io.IOException;
@@ -22,7 +24,7 @@ public class Application {
     private BlockManager blockManager;
     private HttpServer server;
 
-    public Application(int port) throws IOException {
+    public Application(int port) throws IOException, MessageFormatException, BlockFormatException {
         setUpServer(port);
         server.start();
         connectionsHandler.updateConnections();
@@ -39,7 +41,7 @@ public class Application {
         }, 20, 20, TimeUnit.MINUTES);
     }
 
-    private void setUpServer(int port) throws IOException {
+    private void setUpServer(int port) throws IOException, MessageFormatException, BlockFormatException {
         blockManager = new BlockManager();
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/test/ping", new PingPongHandler(this));
@@ -49,6 +51,7 @@ public class Application {
         server.createContext("/connections", connectionsHandler);
         blockHandler = new BlockHandler(this);
         server.createContext("/blocks", blockHandler);
+        server.createContext("/getdata", blockHandler);
         server.createContext("/", new ErrorHandler(this));
         server.setExecutor(Executors.newCachedThreadPool());
     }

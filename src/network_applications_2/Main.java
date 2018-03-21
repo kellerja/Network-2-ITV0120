@@ -1,6 +1,8 @@
 package network_applications_2;
 
+import network_applications_2.block.BlockFormatException;
 import network_applications_2.connections.Connection;
+import network_applications_2.message.MessageFormatException;
 
 import java.io.*;
 
@@ -22,7 +24,7 @@ public class Main {
         return port;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, MessageFormatException, BlockFormatException {
         int port = parsePort(args);
         System.out.println("Starting application on port " + port);
         Application application = new Application(port);

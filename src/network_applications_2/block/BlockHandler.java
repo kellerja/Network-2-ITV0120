@@ -14,6 +14,8 @@ import java.io.OutputStream;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class BlockHandler implements HttpHandler {
@@ -25,13 +27,67 @@ public class BlockHandler implements HttpHandler {
     }
 
     private void handleGetRequest(HttpExchange httpExchange) throws IOException {
-        String response = BlockManager.blocks.stream()
-                .map(Block::getStorageString)
-                .collect(Collectors.joining("\n")) + "\n";
-        httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
+        String path = httpExchange.getRequestURI().getPath();
+        Matcher matcher = Pattern.compile("^/(\\w+)(?:/?|/(\\w+)/?)$").matcher(path);
+        String command = "blocks";
+        String hash = null;
+        if (matcher.matches()) {
+            command = matcher.group(1);
+            hash = matcher.group(2);
+        }
+        String response;
+        int responseCode = HttpURLConnection.HTTP_OK;
+        switch (command) {
+            case "blocks":
+                if (hash == null) {
+                    response = getAllBlocks().stream()
+                            .map(Block::getStorageString)
+                            .collect(Collectors.joining("\n")) + "\n";
+                } else {
+                    response = getAllBlocksStartingFrom(hash).stream()
+                            .map(Block::getStorageString)
+                            .collect(Collectors.joining("\n")) + "\n";
+                }
+                break;
+            case "getdata":
+                if (hash == null) {
+                    responseCode = HttpURLConnection.HTTP_BAD_REQUEST;
+                    response = "Expected hash for /getdata/:HASH query";
+                } else {
+                    response = getSpecificBlock(hash).stream()
+                            .map(Block::getStorageString)
+                            .collect(Collectors.joining("\n")) + "\n";
+                }
+                break;
+            default:
+                responseCode = HttpURLConnection.HTTP_NOT_FOUND;
+                response = "Unexpected resource query " + path;
+                break;
+        }
+
+        httpExchange.sendResponseHeaders(responseCode, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.getBytes());
         }
+    }
+
+    private List<Block> getAllBlocks() {
+        return BlockManager.blocks;
+    }
+
+    private List<Block> getAllBlocksStartingFrom(String hash) {
+        List<Block> blocks = new ArrayList<>();
+        Block block = BlockManager.blocks.stream().filter(b -> hash.equals(b.getHash())).findFirst().orElse(null);
+        if (block != null) {
+            blocks = BlockManager.blocks.subList(BlockManager.blocks.indexOf(block), BlockManager.blocks.size());
+        }
+        return blocks;
+    }
+
+    private List<Block> getSpecificBlock(String hash) {
+        List<Block> blocks = new ArrayList<>();
+        BlockManager.blocks.stream().filter(b -> hash.equals(b.getHash())).findFirst().ifPresent(blocks::add);
+        return blocks;
     }
 
     private void handlePostRequest(HttpExchange httpExchange) throws IOException {
@@ -138,6 +194,7 @@ public class BlockHandler implements HttpHandler {
                                 continue;
                             }
                             BlockManager.blocks.add(block);
+                            BlockManager.writeToFile(block);
                         }
                     }
                     httpURLConnection.disconnect();

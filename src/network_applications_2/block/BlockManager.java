@@ -17,21 +17,41 @@ public class BlockManager implements MessagesFullEvent {
 
     static List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
 
+    public BlockManager() throws BlockFormatException, MessageFormatException, IOException {
+        blocks = Collections.synchronizedList(getBlocksFromFile(new File("resources/Blocks.csv")));
+    }
+
     public void createBlock(List<Message> messages) {
-        String lastHash = ""; // TODO Save blocks to file instead of list
+        String lastHash = "";
         if (!blocks.isEmpty()) {
             Block lastBlock = blocks.get(blocks.size() - 1);
             lastHash = lastBlock.getHash();
-            /*
-            Block tempBlock = new Block(lastBlock.getPreviousHash(), messages);
-            if (findHash(tempBlock).equals(lastHash)) {
-                return;
-            }
-            */
         }
         Block block = new Block(lastHash, messages);
         block.setHash(findHash(block));
         blocks.add(block);
+        writeToFile(block);
+    }
+
+    public static void writeToFile(Block block) {
+        String blockString = block.getStorageString();
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("resources/Blocks.csv", true))) {
+            bufferedWriter.write(blockString);
+            bufferedWriter.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static List<Block> getBlocksFromFile(File file) throws IOException, MessageFormatException, BlockFormatException {
+        List<Block> blocks = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                blocks.add(parseBlock(line.trim()));
+            }
+        }
+        return blocks;
     }
 
     public String findHash(Block block) {
@@ -89,7 +109,7 @@ public class BlockManager implements MessagesFullEvent {
         return blocks;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws BlockFormatException, IOException, MessageFormatException {
         List<Message> messages = new ArrayList<>();
         List<Message> messages1 = new ArrayList<>();
         List<Message> messages2 = new ArrayList<>();

@@ -4,7 +4,6 @@ import network_applications_2.Application;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 public class Connection {
@@ -48,8 +47,7 @@ public class Connection {
         Connection connection = null;
         try {
             URL url = new URL(urlString + "/test/ping");
-            System.out.println(application.getHost() + " " + Integer.toString(application.getPort()) + " " + url.getHost() + " " + Integer.toString(url.getPort()));
-            if (isSelfConnection(application.getHost(), Integer.toString(application.getPort()), url.getHost(), Integer.toString(url.getPort()))) {
+            if (url.getHost().equals("") || isSelfConnection(application.getHost(), Integer.toString(application.getPort()), url.getHost(), Integer.toString(url.getPort()))) {
                 return null;
             }
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
