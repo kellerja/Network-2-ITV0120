@@ -109,52 +109,6 @@ public class BlockManager implements MessagesFullEvent {
         return blocks;
     }
 
-    public static void main(String[] args) throws BlockFormatException, IOException, MessageFormatException {
-        List<Message> messages = new ArrayList<>();
-        List<Message> messages1 = new ArrayList<>();
-        List<Message> messages2 = new ArrayList<>();
-        List<Message> messages3 = new ArrayList<>();
-        Message message = new Message(123465, "data1");
-        Message message1 = new Message(123463, "data2");
-        Message message2 = new Message(123466, "data3");
-        Message message3 = new Message(123464, "data4");
-        Message message4 = new Message(123462, "data5");
-        Message message5 = new Message(823469, "data6");
-        Message message6 = new Message(63294, "data7");
-        Message message7 = new Message(274303, "data8");
-        Message message8 = new Message(5623798, "data9");
-        Message message9 = new Message(283749, "data10");
-
-        messages.add(message);
-        messages.add(message5);
-        messages1.add(message2);
-        messages1.add(message3);
-        messages2.add(message9);
-        messages2.add(message7);
-        messages3.add(message4);
-        messages3.add(message6);
-        messages2.add(message8);
-        messages3.add(message1);
-
-        BlockManager blockHandler = new BlockManager();
-        blockHandler.createBlock(messages);
-        blockHandler.createBlock(messages1);
-        blockHandler.createBlock(messages2);
-        blockHandler.createBlock(messages3);
-
-        for (int i = 0; i < blocks.size(); i++) {
-            Block block = blocks.get(i);
-            System.out.println("BLOCK " + i);
-            System.out.println(block.getTimestamp());
-            System.out.println("Previous hash: " + block.getPreviousHash());
-            for (Message bMessage : block.getMessages()) {
-                System.out.println(bMessage.getTimestamp() + " : " + bMessage.getData());
-            }
-            System.out.println("New hash: " + block.getHash());
-            System.out.println();
-        }
-    }
-
     @Override
     public void propagateMessages(Set<Message> messages) {
         createBlock(new ArrayList<>(messages));

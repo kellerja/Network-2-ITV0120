@@ -19,10 +19,16 @@ import java.util.stream.Collectors;
 public class ConnectionsHandler implements HttpHandler {
 
     private Application application;
-    private List<Connection> connections;
+    private final List<Connection> connections;
 
-    public ConnectionsHandler(Application application) {
+    public ConnectionsHandler(Application application) throws IOException {
         this.application = application;
+        connections = Collections.synchronizedList(Utilities.getConnectionsFromFiles(
+                Arrays.asList(
+                        new File("resources/DefaultHosts.csv"),
+                        new File("resources/KnownHosts.csv")
+                ), application
+        ));
     }
 
     public List<Connection> getConnections() {
@@ -38,12 +44,14 @@ public class ConnectionsHandler implements HttpHandler {
         if (connection == null) {
             return;
         }
-        int connectionIndex = connections.indexOf(connection);
-        if (connectionIndex == -1) {
-            connections.add(connection);
-            Utilities.writeConnectionToFile(connection, new File("resources/KnownHosts.csv"));
-        } else {
-            connections.get(connectionIndex).testConnection();
+        synchronized (connections) {
+            int connectionIndex = connections.indexOf(connection);
+            if (connectionIndex == -1) {
+                connections.add(connection);
+                Utilities.writeConnectionToFile(connection, new File("resources/KnownHosts.csv"));
+            } else {
+                connections.get(connectionIndex).testConnection();
+            }
         }
     }
 
@@ -61,24 +69,11 @@ public class ConnectionsHandler implements HttpHandler {
         return getConnections().stream().filter(Connection::isAlive).collect(Collectors.toList());
     }
 
-    public void updateConnections() {
-        try {
-            connections = Collections.synchronizedList(Utilities.getConnectionsFromFiles(
-                    Arrays.asList(
-                        new File("resources/DefaultHosts.csv"),
-                        new File("resources/KnownHosts.csv")
-                    ), application
-            ));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private Map<String, String> parseQueryString(String queryString) {
-        if (queryString == null) {
-            return null;
-        }
         Map<String, String> query = new HashMap<>();
+        if (queryString == null) {
+            return query;
+        }
         String[] queryParts = queryString.split("&");
         for (String part: queryParts) {
             String[] keyValue = part.split("=");

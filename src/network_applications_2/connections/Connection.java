@@ -3,8 +3,8 @@ package network_applications_2.connections;
 import network_applications_2.Application;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
+import java.util.Enumeration;
 
 public class Connection {
 
@@ -47,7 +47,7 @@ public class Connection {
         Connection connection = null;
         try {
             URL url = new URL(urlString + "/test/ping");
-            if (url.getHost().equals("") || isSelfConnection(application.getHost(), Integer.toString(application.getPort()), url.getHost(), Integer.toString(url.getPort()))) {
+            if (url.getHost().equals("") || isSelfConnection(Integer.toString(application.getPort()), url.getHost(), Integer.toString(url.getPort()))) {
                 return null;
             }
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -62,7 +62,17 @@ public class Connection {
         return connection;
     }
 
-    private static boolean isSelfConnection(String localAddress, String localHost, String remoteAddress, String remotePort) {
-        return localAddress.equals(remoteAddress) && remotePort.equals(localHost);
+    private static boolean isSelfConnection(String localHost, String remoteAddress, String remotePort) throws SocketException {
+        if (!remotePort.equals(localHost)) return false;
+        Enumeration interfaces = NetworkInterface.getNetworkInterfaces();
+        while(interfaces.hasMoreElements()) {
+            NetworkInterface anInterface = (NetworkInterface) interfaces.nextElement();
+            Enumeration inetAddresses = anInterface.getInetAddresses();
+            while (inetAddresses.hasMoreElements()) {
+                InetAddress address = (InetAddress) inetAddresses.nextElement();
+                if (address.getHostAddress().equals(remoteAddress)) return true;
+            }
+        }
+        return "127.0.0.1".equals(remoteAddress) || "localhost".equals(remoteAddress);
     }
 }

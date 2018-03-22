@@ -27,7 +27,6 @@ public class Application {
     public Application(int port) throws IOException, MessageFormatException, BlockFormatException {
         setUpServer(port);
         server.start();
-        connectionsHandler.updateConnections();
         connectionsHandler.requestConnections(true, -1);
         blockHandler.requestMissingBlocks();
         messagesHandler.requestCurrentMessages();
@@ -62,10 +61,6 @@ public class Application {
 
     public BlockManager getBlockManager() {
         return blockManager;
-    }
-
-    public String getHost() {
-        return server.getAddress().getHostName().matches(".*(0:)+.*") ? "127.0.0.1" : server.getAddress().getHostName();
     }
 
     public ConnectionsHandler getConnectionsHandler() {
