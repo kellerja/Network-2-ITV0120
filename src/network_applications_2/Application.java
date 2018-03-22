@@ -63,6 +63,10 @@ public class Application {
         return blockManager;
     }
 
+    public String getHost() {
+        return server.getAddress().getHostName();
+    }
+
     public ConnectionsHandler getConnectionsHandler() {
         return connectionsHandler;
     }

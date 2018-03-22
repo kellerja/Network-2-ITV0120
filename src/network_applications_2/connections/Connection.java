@@ -11,9 +11,9 @@ public class Connection {
     private String url;
     private boolean alive;
 
-    private Connection(String url, boolean alive) {
+    private Connection(String url) {
         this.url = url;
-        this.alive = alive;
+        this.alive = testConnection();
     }
 
     public boolean testConnection() {
@@ -47,23 +47,17 @@ public class Connection {
         Connection connection = null;
         try {
             URL url = new URL(urlString + "/test/ping");
-            if (url.getHost().equals("") || isSelfConnection(Integer.toString(application.getPort()), url.getHost(), Integer.toString(url.getPort()))) {
+            if (url.getHost().equals("") || isSelfConnection(application.getHost(), Integer.toString(application.getPort()), url.getHost(), Integer.toString(url.getPort()))) {
                 return null;
             }
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setConnectTimeout(100);
-            httpURLConnection.setRequestMethod("GET");
-            httpURLConnection.disconnect();
-            boolean alive = httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK;
-            connection = new Connection(urlString, alive);
-        } catch (IOException e) {
-            connection = new Connection(urlString, false);
+            connection = new Connection(urlString);
+        } catch (IOException ignored) {
         }
         return connection;
     }
 
-    private static boolean isSelfConnection(String localHost, String remoteAddress, String remotePort) throws SocketException {
-        if (!remotePort.equals(localHost)) return false;
+    private static boolean isSelfConnection(String localHost, String localPort, String remoteAddress, String remotePort) throws SocketException {
+        if (!remotePort.equals(localPort)) return false;
         Enumeration interfaces = NetworkInterface.getNetworkInterfaces();
         while(interfaces.hasMoreElements()) {
             NetworkInterface anInterface = (NetworkInterface) interfaces.nextElement();
@@ -73,6 +67,6 @@ public class Connection {
                 if (address.getHostAddress().equals(remoteAddress)) return true;
             }
         }
-        return "127.0.0.1".equals(remoteAddress) || "localhost".equals(remoteAddress);
+        return "127.0.0.1".equals(remoteAddress) || "localhost".equals(remoteAddress) || localHost.equals(remoteAddress);
     }
 }
