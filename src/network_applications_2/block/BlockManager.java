@@ -15,10 +15,10 @@ import java.util.Set;
 
 public class BlockManager implements MessagesFullEvent {
 
-    static List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
+    static final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
 
     public BlockManager() throws BlockFormatException, MessageFormatException, IOException {
-        blocks = Collections.synchronizedList(getBlocksFromFile(new File("resources/Blocks.csv")));
+        blocks.addAll(getBlocksFromFile(new File("resources/Blocks.csv")));
     }
 
     public void createBlock(List<Message> messages) {
@@ -26,6 +26,8 @@ public class BlockManager implements MessagesFullEvent {
         if (!blocks.isEmpty()) {
             Block lastBlock = blocks.get(blocks.size() - 1);
             lastHash = lastBlock.getHash();
+            Block tmpBlock = new Block(lastBlock.getPreviousHash(), messages);
+            if (tmpBlock.equals(lastBlock)) return;
         }
         Block block = new Block(lastHash, messages);
         block.setHash(findHash(block));

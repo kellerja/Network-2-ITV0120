@@ -47,7 +47,7 @@ public class MessagesHandler implements HttpHandler {
                         .anyMatch(block -> block.getMessages().contains(message));
     }
 
-    private String buildPostResponseString(String[] messageBody, List<Message> newMessages) {
+    private synchronized String buildPostResponseString(String[] messageBody, List<Message> newMessages) {
         StringBuilder response = new StringBuilder();
         for (String possibleMessage: messageBody) {
             try {
@@ -65,7 +65,7 @@ public class MessagesHandler implements HttpHandler {
         return response.toString();
     }
 
-    private void handlePostRequest(HttpExchange httpExchange) throws IOException {
+    private synchronized void handlePostRequest(HttpExchange httpExchange) throws IOException {
         String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\\R");
         List<Message> newMessages = new ArrayList<>();
         String response = buildPostResponseString(messageBody, newMessages);
