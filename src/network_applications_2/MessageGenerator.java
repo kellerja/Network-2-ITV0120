@@ -1,6 +1,8 @@
 package network_applications_2;
 
 
+import network_applications_2.message.Data;
+import network_applications_2.message.DataType;
 import network_applications_2.message.Message;
 
 import java.io.*;
@@ -21,7 +23,7 @@ public class MessageGenerator {
             String name2 = generateName(3);
             double tambergAmount = 0.1 + Math.random() * (10000 - 0.1);
             String msg = name1 + " -> " + name2 + " - " + tambergAmount + " TambergCoin";
-            msgs.add(new Message(timestamp, msg));
+            msgs.add(new Message(timestamp, new Data(name2, tambergAmount), DataType.TRANSACTION, name1));
             writeToFile(timestamp + ", " + msg);
         }
         return msgs;

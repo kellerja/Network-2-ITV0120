@@ -81,4 +81,5 @@ public class Block implements Comparable<Block>, Serializable {
     public boolean equals(Object o) {
         return o instanceof Block && compareTo((Block) o) == 0;
     }
+
 }

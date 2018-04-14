@@ -3,6 +3,7 @@ package network_applications_2.block;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.MessagesFullEvent;
+import network_applications_2.validation.Database;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
@@ -16,9 +17,11 @@ import java.util.Set;
 public class BlockManager implements MessagesFullEvent {
 
     static final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
+    private Database wallets;
 
     public BlockManager() throws BlockFormatException, MessageFormatException, IOException {
         blocks.addAll(getBlocksFromFile(new File("resources/Blocks.csv")));
+        wallets = new Database(blocks);
     }
 
     public void createBlock(List<Message> messages) {
@@ -31,8 +34,10 @@ public class BlockManager implements MessagesFullEvent {
         }
         Block block = new Block(lastHash, messages);
         block.setHash(findHash(block));
-        blocks.add(block);
-        writeToFile(block);
+        if (wallets.mergeBlock(block)) {
+            blocks.add(block);
+            writeToFile(block);
+        }
     }
 
     public static void writeToFile(Block block) {
@@ -96,7 +101,7 @@ public class BlockManager implements MessagesFullEvent {
         try {
             timestamp = Long.parseLong(timestampStr);
         } catch (NumberFormatException e) {
-            throw new BlockFormatException("Block third parameter mus be a correct unix timestamp", e);
+            throw new BlockFormatException("Block third parameter must be a correct unix timestamp", e);
         }
 
         List<Message> messagesList = new ArrayList<>();
