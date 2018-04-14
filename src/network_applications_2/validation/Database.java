@@ -11,11 +11,12 @@ import java.util.Map;
 public class Database {
 
     private Map<String, Double> wallets;
+    private KeyManager keyManager;
 
-    public Database(List<Block> blocks) {
+    public Database(List<Block> blocks, KeyManager keyManager) {
+        this.keyManager = keyManager;
         wallets = new HashMap<>();
         createWallets(blocks);
-        System.out.println(toString());
     }
 
     public boolean mergeBlock(Block block) {
@@ -38,12 +39,12 @@ public class Database {
                 case TRANSACTION:
                     tempWallets.put(message.getData().getReceiver(),
                             tempWallets.getOrDefault(message.getData().getReceiver(), 0.0) + message.getData().getAmount());
-                    tempWallets.put(message.getSignature(),
-                            tempWallets.getOrDefault(message.getSignature(), 0.0) - message.getData().getAmount());
+                    tempWallets.put(message.getData().getSender(),
+                            tempWallets.getOrDefault(message.getData().getSender(), 0.0) - message.getData().getAmount());
                     break;
                 case FREE:
-                    tempWallets.put(message.getData().getReceiver(),
-                            tempWallets.getOrDefault(message.getData().getReceiver(), 0.0) + message.getData().getAmount());
+                    tempWallets.put(message.getData().getSender(),
+                            tempWallets.getOrDefault(message.getData().getSender(), 0.0) + message.getData().getAmount());
                     break;
                 default:
                     throw new NotImplementedException();
@@ -58,7 +59,8 @@ public class Database {
     }
 
     private boolean checkMessage(Message message) {
-        return message.getData() != null;
+        return message.getData() != null &&
+                keyManager.validate(Message.getStorageString(message.getTimestamp(), message.getData(), message.getDataType()), message.getSignature(), message.getData().getSender());
     }
 
     private void addBlock(Block block) {
@@ -66,7 +68,7 @@ public class Database {
             double funds = message.getData().getAmount();
             switch (message.getDataType()) {
                 case TRANSACTION:
-                    wallets.put(message.getSignature(), wallets.getOrDefault(message.getSignature(), 0.0) - funds);
+                    wallets.put(message.getData().getSender(), wallets.getOrDefault(message.getData().getSender(), 0.0) - funds);
                     wallets.put(message.getData().getReceiver(), wallets.getOrDefault(message.getData().getReceiver(), 0.0) + funds);
                     break;
                 case FREE:

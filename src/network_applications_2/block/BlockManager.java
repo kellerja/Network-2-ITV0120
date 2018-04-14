@@ -4,11 +4,13 @@ import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.MessagesFullEvent;
 import network_applications_2.validation.Database;
+import network_applications_2.validation.KeyManager;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,9 +21,9 @@ public class BlockManager implements MessagesFullEvent {
     static final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
     private Database wallets;
 
-    public BlockManager() throws BlockFormatException, MessageFormatException, IOException {
+    public BlockManager() throws BlockFormatException, MessageFormatException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         blocks.addAll(getBlocksFromFile(new File("resources/Blocks.csv")));
-        wallets = new Database(blocks);
+        wallets = new Database(blocks, new KeyManager());
     }
 
     public void createBlock(List<Message> messages) {

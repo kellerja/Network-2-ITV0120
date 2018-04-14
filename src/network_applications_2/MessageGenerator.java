@@ -1,32 +1,52 @@
 package network_applications_2;
 
-
 import network_applications_2.message.Data;
 import network_applications_2.message.DataType;
 import network_applications_2.message.Message;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
+import java.security.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class MessageGenerator {
 
-    public List<Message> generateMessages(int messageAmount, String beginningDate) {
+    private Map<String, KeyPair> keys;
+
+    public MessageGenerator() {
+        keys = new HashMap<>();
+    }
+
+    public List<Message> generateMessages(int messageAmount, String beginningDate) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         List<Message> msgs = new ArrayList<>();
         for (int i = 0; i < messageAmount; i++) {
             long timestamp = generateTimestamp(beginningDate);
-            String name1 = generateName(3);
-            String name2 = generateName(3);
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(1024);
+            KeyPair keyPair1 = keyPairGenerator.generateKeyPair();
+            String name1 = DatatypeConverter.printHexBinary(keyPair1.getPublic().getEncoded());
+            keys.put(name1, keyPair1);
+            KeyPair keyPair2 = keyPairGenerator.generateKeyPair();
+            String name2 = DatatypeConverter.printHexBinary(keyPair2.getPublic().getEncoded());
+            keys.put(name2, keyPair2);
             double tambergAmount = 0.1 + Math.random() * (10000 - 0.1);
             String msg = name1 + " -> " + name2 + " - " + tambergAmount + " TambergCoin";
-            msgs.add(new Message(timestamp, new Data(name2, tambergAmount), DataType.TRANSACTION, name1));
+
+            Data data = new Data(name1, name2, tambergAmount);
+            msgs.add(new Message(timestamp, data, DataType.TRANSACTION,
+                    sign(keyPair1, Message.getStorageString(timestamp, data, DataType.TRANSACTION))));
             writeToFile(timestamp + ", " + msg);
         }
         return msgs;
+    }
+
+    public static String sign(KeyPair keyPair, String data) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(keyPair.getPrivate());
+        signature.update(data.getBytes());
+        return DatatypeConverter.printHexBinary(signature.sign());
     }
 
     private void writeToFile(String msg) {
@@ -42,16 +62,6 @@ public class MessageGenerator {
         }
     }
 
-    private String generateName(int nameLength) {
-        Random random = new Random();
-        StringBuilder stringBuilder = new StringBuilder(nameLength);
-        for (int i = 0; i < nameLength; i++) {
-            int randomLetter = 97 + (int)(random.nextFloat() * (122 - 97 + 1));
-            stringBuilder.append((char) randomLetter);
-        }
-        return stringBuilder.toString();
-    }
-
     private long generateTimestamp(String beginningDate) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date date = null;
@@ -64,7 +74,11 @@ public class MessageGenerator {
         return beginningTimestamp + Math.abs(new Random().nextLong()) % (new Date().getTime()/1000 - beginningTimestamp);
     }
 
-    public static void main(String[] args) {
+    public Map<String, KeyPair> getKeys() {
+        return keys;
+    }
+
+    public static void main(String[] args) throws NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         MessageGenerator messageGenerator = new MessageGenerator();
         messageGenerator.generateMessages(100, "2000-05-02");
     }

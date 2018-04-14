@@ -5,6 +5,9 @@ import network_applications_2.connections.Connection;
 import network_applications_2.message.MessageFormatException;
 
 import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 public class Main {
 
@@ -24,7 +27,7 @@ public class Main {
         return port;
     }
 
-    public static void main(String[] args) throws IOException, MessageFormatException, BlockFormatException {
+    public static void main(String[] args) throws IOException, MessageFormatException, BlockFormatException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
         int port = parsePort(args);
         System.out.println("Starting application on port " + port);
         Application application = new Application(port);

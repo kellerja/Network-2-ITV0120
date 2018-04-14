@@ -10,9 +10,13 @@ import network_applications_2.connections.PingPongHandler;
 import network_applications_2.error.ErrorHandler;
 import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.MessagesHandler;
+import network_applications_2.validation.KeyManager;
 
 import java.io.IOException;
 import java.net.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -23,8 +27,10 @@ public class Application {
     private BlockHandler blockHandler;
     private BlockManager blockManager;
     private HttpServer server;
+    private KeyManager keyManager;
 
-    public Application(int port) throws IOException, MessageFormatException, BlockFormatException {
+    public Application(int port) throws IOException, MessageFormatException, BlockFormatException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        keyManager = new KeyManager();
         setUpServer(port);
         server.start();
         connectionsHandler.requestConnections(true, -1);
@@ -40,7 +46,7 @@ public class Application {
         }, 20, 20, TimeUnit.MINUTES);
     }
 
-    private void setUpServer(int port) throws IOException, MessageFormatException, BlockFormatException {
+    private void setUpServer(int port) throws IOException, MessageFormatException, BlockFormatException, InvalidKeySpecException, NoSuchAlgorithmException {
         blockManager = new BlockManager();
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/test/ping", new PingPongHandler(this));
@@ -69,5 +75,9 @@ public class Application {
 
     public ConnectionsHandler getConnectionsHandler() {
         return connectionsHandler;
+    }
+
+    public KeyManager getKeyManager() {
+        return keyManager;
     }
 }
