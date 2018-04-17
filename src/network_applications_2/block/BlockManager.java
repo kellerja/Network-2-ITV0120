@@ -36,7 +36,7 @@ public class BlockManager implements MessagesFullEvent {
         }
         Block block = new Block(lastHash, messages);
         block.setHash(findHash(block));
-        if (wallets.mergeBlock(block)) {
+        if (wallets.mergeBlock(block, blocks)) {
             blocks.add(block);
             writeToFile(block);
         }

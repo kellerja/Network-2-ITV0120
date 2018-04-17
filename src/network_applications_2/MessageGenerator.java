@@ -1,8 +1,8 @@
 package network_applications_2;
 
-import network_applications_2.message.Data;
-import network_applications_2.message.DataType;
+import network_applications_2.message.data.Data;
 import network_applications_2.message.Message;
+import network_applications_2.message.data.Transaction;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
@@ -32,11 +32,11 @@ public class MessageGenerator {
             String name2 = DatatypeConverter.printHexBinary(keyPair2.getPublic().getEncoded());
             keys.put(name2, keyPair2);
             double tambergAmount = 0.1 + Math.random() * (10000 - 0.1);
-            String msg = name1 + " -> " + name2 + " - " + tambergAmount + " TambergCoin";
+            String msg = name1 + ", " + name2 + ", " + tambergAmount;
 
-            Data data = new Data(name1, name2, tambergAmount);
-            msgs.add(new Message(timestamp, data, DataType.TRANSACTION,
-                    sign(keyPair1, Message.getStorageString(timestamp, data, DataType.TRANSACTION))));
+            Data data = new Transaction(name1, name2, tambergAmount);
+            msgs.add(new Message<>(timestamp, data,
+                    sign(keyPair1, Message.getStorageString(timestamp, data))));
             writeToFile(timestamp + ", " + msg);
         }
         return msgs;

@@ -2,10 +2,11 @@ package network_applications_2;
 
 import network_applications_2.block.BlockFormatException;
 import network_applications_2.block.BlockManager;
-import network_applications_2.message.Data;
-import network_applications_2.message.DataType;
+import network_applications_2.message.data.Data;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
+import network_applications_2.message.data.FreeMoney;
+import network_applications_2.message.data.Transaction;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -35,17 +36,21 @@ public class BlockGenerator {
     private List<Message> ensureValidBlock(List<Message> messages) throws MessageFormatException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Map<String, Double> wallets = new HashMap<>();
         for (Message message: messages) {
-            wallets.put(message.getData().getSender(), wallets.getOrDefault(message.getData().getSender(), 0.0) - message.getData().getAmount());
-            wallets.put(message.getData().getReceiver(), wallets.getOrDefault(message.getData().getReceiver(), 0.0) + message.getData().getAmount());
+            if (!(message.getData() instanceof Transaction)) {
+                continue;
+            }
+            Transaction transaction = (Transaction) message.getData();
+            wallets.put(transaction.getSender(), wallets.getOrDefault(transaction.getSender(), 0.0) - transaction.getAmount());
+            wallets.put(transaction.getReceiver(), wallets.getOrDefault(transaction.getReceiver(), 0.0) + transaction.getAmount());
         }
         for (String receiver: wallets.keySet()) {
             if (wallets.get(receiver) < 0) {
                 long timestamp = 2342352;
                 double amount = Math.abs(wallets.get(receiver));
-                Data data = new Data(receiver, null, amount);
+                Data data = new FreeMoney(receiver, amount);
                 messages.add(Message.parseMessage(timestamp + ", " +
-                        MessageGenerator.sign(messageGenerator.getKeys().get(receiver), Message.getStorageString(timestamp, data, DataType.FREE)) +
-                        ", " + receiver + ", " + amount + " TambergCoin"));
+                        MessageGenerator.sign(messageGenerator.getKeys().get(receiver), Message.getStorageString(timestamp, data)) +
+                        ", " + receiver + ", " + amount));
             }
         }
         return messages;
