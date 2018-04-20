@@ -14,6 +14,7 @@ public class Block implements Comparable<Block>, Serializable {
     private String previousHash = "";
     private List<Message> messages = new ArrayList<>();
     private String newHash = "";
+    private String nonce = "";
 
     public Block(String previousHash) {
         this.previousHash = previousHash;
@@ -27,11 +28,12 @@ public class Block implements Comparable<Block>, Serializable {
         timestamp = messages.get(messages.size()-1).getTimestamp();
     }
 
-    public Block(long timestamp, String previousHash, List<Message> messages, String newHash) {
+    public Block(long timestamp, String previousHash, List<Message> messages, String newHash, String nonce) {
         this.timestamp = timestamp;
         this.previousHash = previousHash;
         this.messages = messages;
         this.newHash = newHash;
+        this.nonce = nonce;
     }
 
     public void addMessage(Message message) {
@@ -62,7 +64,11 @@ public class Block implements Comparable<Block>, Serializable {
     }
 
     public String getStorageString() {
-        return getHash() + "|" + getPreviousHash() + "|" + getTimestamp() + "|" +
+        return getHash() + "|" + getHashlessString() + "|" + getNonce();
+    }
+
+    public String getHashlessString() {
+        return getPreviousHash() + "|" + getTimestamp() + "|" +
                 getMessages().stream().map(Message::getStorageString).collect(Collectors.joining(";"));
     }
 
@@ -82,4 +88,11 @@ public class Block implements Comparable<Block>, Serializable {
         return o instanceof Block && compareTo((Block) o) == 0;
     }
 
+    public String getNonce() {
+        return nonce;
+    }
+
+    public void setNonce(String nonce) {
+        this.nonce = nonce;
+    }
 }

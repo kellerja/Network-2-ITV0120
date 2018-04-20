@@ -18,6 +18,8 @@ import java.util.Set;
 
 public class BlockManager implements MessagesFullEvent {
 
+    public static final int HASH_VALIDATION_ZEROES_COUNT = 4;
+
     static final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
     private Database wallets;
 
@@ -35,7 +37,14 @@ public class BlockManager implements MessagesFullEvent {
             if (tmpBlock.equals(lastBlock)) return;
         }
         Block block = new Block(lastHash, messages);
-        block.setHash(findHash(block));
+        String blockString = block.getHashlessString();
+        String nonce, hash;
+        do {
+            nonce = Double.toString(Math.random()).substring(2);
+            hash = findHash(blockString + "|" + nonce);
+        } while (!isBlockHashCorrect(hash));
+        block.setNonce(nonce);
+        block.setHash(hash);
         if (wallets.mergeBlock(block, blocks)) {
             blocks.add(block);
             writeToFile(block);
@@ -63,30 +72,17 @@ public class BlockManager implements MessagesFullEvent {
         return blocks;
     }
 
-    public String findHash(Block block) {
+    public String findHash(String block) {
         MessageDigest digest = null;
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        byte[] buf = blockToByteArray(block);
+        byte[] buf = block.getBytes();
         byte[] sha256ByteArr = digest != null ? digest.digest(buf) : new byte[0];
 
         return DatatypeConverter.printHexBinary(sha256ByteArr);
-    }
-
-    public byte[] blockToByteArray(Block block) {
-        byte[] buf = new byte[0];
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(block);
-            buf = baos.toByteArray();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return buf;
     }
 
     public static Block parseBlock(String possibleBlock) throws BlockFormatException, MessageFormatException {
@@ -98,6 +94,7 @@ public class BlockManager implements MessagesFullEvent {
         String prevHash = blockParts[1];
         String timestampStr = blockParts[2];
         String data = blockParts[3];
+        String nonce = blockParts[4];
 
         long timestamp;
         try {
@@ -111,11 +108,15 @@ public class BlockManager implements MessagesFullEvent {
         for (String i : messages) {
             messagesList.add(Message.parseMessage(i));
         }
-        return new Block(timestamp, prevHash, messagesList, newHash);
+        return new Block(timestamp, prevHash, messagesList, newHash, nonce);
     }
 
     public static List<Block> getBlocks() {
         return blocks;
+    }
+
+    public static boolean isBlockHashCorrect(String hash) {
+        return hash.substring(0, HASH_VALIDATION_ZEROES_COUNT).matches("^0*$");
     }
 
     @Override

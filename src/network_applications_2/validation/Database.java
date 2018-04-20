@@ -1,15 +1,17 @@
 package network_applications_2.validation;
 
 import network_applications_2.block.Block;
+import network_applications_2.block.BlockManager;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.data.FreeMoney;
 import network_applications_2.message.data.Transaction;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Database {
 
@@ -36,11 +38,16 @@ public class Database {
         return false;
     }
 
-    private boolean checkBlock(Block block, List<Block> chain) throws MessageFormatException {
+    private boolean checkBlock(Block block, List<Block> chain) {
+        if (!BlockManager.isBlockHashCorrect(block.getHash())) {
+            return false;
+        }
         Map<String, Double> tempWallets = new HashMap<>();
+        List<Message> messagesToRemove = new ArrayList<>();
         for (Message message: block.getMessages()) {
             if (!checkMessage(message, chain)) {
-                return false;
+                messagesToRemove.add(message);
+                continue;
             }
             if (message.getData() instanceof Transaction) {
                 Transaction transaction = (Transaction) message.getData();
@@ -53,20 +60,32 @@ public class Database {
                 tempWallets.put(freeMoney.getReceiver(),
                         tempWallets.getOrDefault(freeMoney.getReceiver(), 0.0) + freeMoney.getAmount());
             } else {
-                throw new MessageFormatException("Invalid Data type");
+                messagesToRemove.add(message);
             }
         }
+        block.getMessages().removeAll(messagesToRemove);
+        List<String> accountsInNegative = new ArrayList<>();
         for (String walletSignature: tempWallets.keySet()) {
             if (wallets.getOrDefault(walletSignature, 0.0) + tempWallets.get(walletSignature) < 0) {
-                return false;
+                accountsInNegative.add(walletSignature);
             }
         }
-        return true;
+        for (String walletOwner: accountsInNegative) {
+            List<Message> invalidMessages = block.getMessages().stream().filter(m -> {
+                if (!(m.getData() instanceof Transaction)) {
+                    return false;
+                }
+                Transaction transaction = (Transaction) m.getData();
+                return transaction.getSender().equals(walletOwner);
+            }).collect(Collectors.toList());
+            block.getMessages().removeAll(invalidMessages);
+        }
+        return !block.getMessages().isEmpty();
     }
 
     private boolean checkMessage(Message message, List<Block> chain) {
         String publicKey = message.getData() instanceof Transaction ? ((Transaction) message.getData()).getSender() : message.getData().getReceiver();
-        return message.getData() != null &&
+        return message.getData() != null && message.getData().getAmount() >= 0 &&
                 keyManager.validate(Message.getStorageString(message.getTimestamp(), message.getData()), message.getSignature(), publicKey) &&
                 messageNotInChain(message, chain);
     }

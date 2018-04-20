@@ -24,7 +24,7 @@ public class MessageGenerator {
         for (int i = 0; i < messageAmount; i++) {
             long timestamp = generateTimestamp(beginningDate);
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize(1024);
+            keyPairGenerator.initialize(512);
             KeyPair keyPair1 = keyPairGenerator.generateKeyPair();
             String name1 = DatatypeConverter.printHexBinary(keyPair1.getPublic().getEncoded());
             keys.put(name1, keyPair1);
