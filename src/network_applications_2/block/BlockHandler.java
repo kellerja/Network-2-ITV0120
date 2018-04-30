@@ -3,7 +3,7 @@ package network_applications_2.block;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import network_applications_2.Application;
-import network_applications_2.Utilities;
+import network_applications_2.utils.Utilities;
 import network_applications_2.connections.Connection;
 import network_applications_2.connections.ConnectionsHandler;
 import network_applications_2.message.MessageFormatException;
@@ -94,27 +94,65 @@ public class BlockHandler implements HttpHandler {
         String[] messageBody = new String(Utilities.inputStream2ByteArray(httpExchange.getRequestBody())).split("\\R");
         StringBuilder response = new StringBuilder();
         List<Block> newBlocks = new ArrayList<>();
-        for (String possibleBlock : messageBody) {
-            try {
-                Block block = BlockManager.parseBlock(possibleBlock);
-                response.append("Block ").append(possibleBlock).append(" saved").append("\n");
+        List<List<Block>> chains = getChains(messageBody, response);
+        int biggest = 0;
+        int bigIndex = 0;
+        for (int i = 0; i < chains.size(); i++) {
+            List<Block> chain = chains.get(i);
+            int temp = getAllBlocksStartingFrom(chain.get(0).getHash()).size();
+            if (temp > biggest) {
+                bigIndex = i;
+                biggest = temp;
+            }
+        }
+        if (biggest < chains.get(bigIndex).size()) {
+            for (Block block: chains.get(bigIndex)) {
                 if (BlockManager.blocks.contains(block)) {
                     continue;
                 }
                 BlockManager.blocks.add(block);
                 newBlocks.add(block);
-            } catch (BlockFormatException | MessageFormatException e) {
-                response.append("Block ").append(possibleBlock).append(" malformed with error ").append(e.getMessage()).append("\n");
             }
-        }
-        if (newBlocks.size() > 0) {
-            floodBlocks(newBlocks);
+            if (newBlocks.size() > 0) {
+                floodBlocks(newBlocks);
+            }
         }
 
         httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.length());
         try (OutputStream os = httpExchange.getResponseBody()) {
             os.write(response.toString().getBytes());
         }
+    }
+
+    private List<List<Block>> getChains(String[] messageBody, StringBuilder response) {
+        List<List<Block>> chains = new ArrayList<>();
+        for (String possibleBlock : messageBody) {
+            try {
+                Block block = BlockManager.parseBlock(possibleBlock);
+                response.append("Block ").append(possibleBlock).append(" saved").append("\n");
+                if (block.getPreviousHash() == null || block.getPreviousHash().equals("")) {
+                    List<Block> blocks = new ArrayList<>();
+                    blocks.add(block);
+                    chains.add(blocks);
+                }
+                boolean added = false;
+                for (List<Block> chain: chains) {
+                    if (block.getPreviousHash().equals(chain.get(chain.size() - 1).getHash())) {
+                        added = true;
+                        chain.add(block);
+                        break;
+                    }
+                }
+                if (!added) {
+                    List<Block> blocks = new ArrayList<>();
+                    blocks.add(block);
+                    chains.add(blocks);
+                }
+            } catch (BlockFormatException | MessageFormatException e) {
+                response.append("Block ").append(possibleBlock).append(" malformed with error ").append(e.getMessage()).append("\n");
+            }
+        }
+        return chains;
     }
 
     @Override

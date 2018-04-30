@@ -2,13 +2,13 @@ package network_applications_2.block;
 
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
+import network_applications_2.message.MessageParser;
 import network_applications_2.message.MessagesFullEvent;
+import network_applications_2.utils.Hasher;
 import network_applications_2.validation.Database;
 import network_applications_2.validation.KeyManager;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.*;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class BlockManager implements MessagesFullEvent {
         String nonce, hash;
         do {
             nonce = Double.toString(Math.random()).substring(2);
-            hash = findHash(blockString + "|" + nonce);
+            hash = Hasher.hash(blockString + "|" + nonce);
         } while (!isBlockHashCorrect(hash));
         block.setNonce(nonce);
         block.setHash(hash);
@@ -72,19 +72,6 @@ public class BlockManager implements MessagesFullEvent {
         return blocks;
     }
 
-    public String findHash(String block) {
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        byte[] buf = block.getBytes();
-        byte[] sha256ByteArr = digest != null ? digest.digest(buf) : new byte[0];
-
-        return DatatypeConverter.printHexBinary(sha256ByteArr);
-    }
-
     public static Block parseBlock(String possibleBlock) throws BlockFormatException, MessageFormatException {
         String[] blockParts = possibleBlock.split("\\|");
         if (blockParts.length < 4) {
@@ -106,7 +93,7 @@ public class BlockManager implements MessagesFullEvent {
         List<Message> messagesList = new ArrayList<>();
         String[] messages = data.split(";");
         for (String i : messages) {
-            messagesList.add(Message.parseMessage(i));
+            messagesList.add(MessageParser.parseMessage(i));
         }
         return new Block(timestamp, prevHash, messagesList, newHash, nonce);
     }

@@ -3,7 +3,7 @@ package network_applications_2.connections;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import network_applications_2.Application;
-import network_applications_2.Utilities;
+import network_applications_2.utils.Utilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +40,7 @@ public class ConnectionsHandler implements HttpHandler {
         if (port.equals("")) {
             return;
         }
-        Connection connection = Connection.parseConnection("http://" + httpExchange.getRemoteAddress().getHostString() + ":" + port, application);
+        Connection connection = Connection.parseConnection("http://" + httpExchange.getRemoteAddress().getHostString() + ":" + port, application.getHost(), application.getPort());
         if (connection == null) {
             return;
         }
@@ -158,7 +158,7 @@ public class ConnectionsHandler implements HttpHandler {
                         byte[] dataBytes = Utilities.inputStream2ByteArray(is);
                         String[] data = new String(dataBytes).split("\\R");
                         for (String line: data) {
-                            Connection newConnection = Connection.parseConnection(line, application);
+                            Connection newConnection = Connection.parseConnection(line, application.getHost(), application.getPort());
                             if (newConnection == null || connections.contains(newConnection)) {
                                 continue;
                             }

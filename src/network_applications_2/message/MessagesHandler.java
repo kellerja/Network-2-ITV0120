@@ -2,8 +2,7 @@ package network_applications_2.message;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import network_applications_2.Application;
-import network_applications_2.Utilities;
+import network_applications_2.utils.Utilities;
 import network_applications_2.block.BlockManager;
 import network_applications_2.connections.Connection;
 import network_applications_2.connections.ConnectionsHandler;
@@ -22,11 +21,13 @@ public class MessagesHandler implements HttpHandler {
     public static final int MINIMUM_MESSAGES_PER_BLOCK = 5;
 
     private static Set<Message> messages = Collections.synchronizedSet(new TreeSet<>());
-    private Application application;
+    private ConnectionsHandler connectionsHandler;
     private MessagesFullEvent messagesFullEvent;
+    private final int port;
 
-    public MessagesHandler(Application application, MessagesFullEvent event) {
-        this.application = application;
+    public MessagesHandler(ConnectionsHandler connectionsHandler, int port, MessagesFullEvent event) {
+        this.connectionsHandler = connectionsHandler;
+        this.port = port;
         this.messagesFullEvent = event;
     }
 
@@ -51,7 +52,7 @@ public class MessagesHandler implements HttpHandler {
         StringBuilder response = new StringBuilder();
         for (String possibleMessage: messageBody) {
             try {
-                Message message = Message.parseMessage(possibleMessage);
+                Message message = MessageParser.parseMessage(possibleMessage);
                 response.append("Message ").append(possibleMessage).append(" saved\n");
                 if(isMessageAlreadySaved(message)) {
                     continue;
@@ -102,7 +103,7 @@ public class MessagesHandler implements HttpHandler {
                     os.write(response.getBytes());
                 }
         }
-        application.getConnectionsHandler().addIncomingConnection(httpExchange);
+        connectionsHandler.addIncomingConnection(httpExchange);
     }
 
     public void floodMessage(List<Message> messages) {
@@ -110,13 +111,13 @@ public class MessagesHandler implements HttpHandler {
         for (Message message: messages) {
             messageBody.append(message.getStorageString()).append("\n");
         }
-        for (Connection connection : application.getConnectionsHandler().getAliveConnections()) {
+        for (Connection connection : connectionsHandler.getAliveConnections()) {
             new Thread(() -> {
                 try {
                     URL url = new URL(connection.getUrl() + "/messages");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("POST");
-                    httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(port));
 
                     httpURLConnection.setDoOutput(true);
                     try (OutputStream os = httpURLConnection.getOutputStream()) {
@@ -143,20 +144,20 @@ public class MessagesHandler implements HttpHandler {
     }
 
     public void requestCurrentMessages() {
-        for (Connection connection: application.getConnectionsHandler().getAliveConnections()) {
+        for (Connection connection: connectionsHandler.getAliveConnections()) {
             new Thread(() -> {
                 try {
                     URL url = new URL(connection.getUrl() + "/messages");
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("GET");
-                    httpURLConnection.setRequestProperty("Port", Integer.toString(application.getPort()));
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(port));
 
                     if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         InputStream is = httpURLConnection.getInputStream();
                         String[] data = new String(Utilities.inputStream2ByteArray(is)).split("\\R");
                         for (String line: data) {
                             if (line == null || "".equals(line.trim())) continue;
-                            Message message = Message.parseMessage(line);
+                            Message message = MessageParser.parseMessage(line);
                             if (isMessageAlreadySaved(message)) {
                                 continue;
                             }

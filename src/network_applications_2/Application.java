@@ -50,10 +50,10 @@ public class Application {
         blockManager = new BlockManager();
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/test/ping", new PingPongHandler(this));
-        messagesHandler = new MessagesHandler(this, blockManager);
-        server.createContext("/messages", messagesHandler);
         connectionsHandler = new ConnectionsHandler(this);
         server.createContext("/connections", connectionsHandler);
+        messagesHandler = new MessagesHandler(connectionsHandler, port, blockManager);
+        server.createContext("/messages", messagesHandler);
         blockHandler = new BlockHandler(this);
         server.createContext("/blocks", blockHandler);
         server.createContext("/getdata", blockHandler);

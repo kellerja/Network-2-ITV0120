@@ -40,14 +40,14 @@ public class Connection {
 
     @Override
     public boolean equals(Object o) {
-        return o != null && o instanceof Connection && ((Connection) o).getUrl().equals(url);
+        return o instanceof Connection && ((Connection) o).getUrl().equals(url);
     }
 
-    public static Connection parseConnection(String urlString, Application application) {
+    public static Connection parseConnection(String urlString, String host, int port) {
         Connection connection = null;
         try {
             URL url = new URL(urlString + "/test/ping");
-            if (url.getHost().equals("") || isSelfConnection(application.getHost(), Integer.toString(application.getPort()), url.getHost(), Integer.toString(url.getPort()))) {
+            if (url.getHost().equals("") || isSelfConnection(host, Integer.toString(port), url.getHost(), Integer.toString(url.getPort()))) {
                 return null;
             }
             connection = new Connection(urlString);

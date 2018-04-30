@@ -56,7 +56,7 @@ public class KeyManager {
     }
 
     public boolean validate(String data, String allegedSignature, String pubKey){
-        Signature signature = null;
+        Signature signature;
         try {
             signature = Signature.getInstance("SHA256withRSA");
             byte[] publicKey = DatatypeConverter.parseHexBinary(pubKey);

@@ -1,5 +1,6 @@
-package network_applications_2;
+package network_applications_2.utils;
 
+import network_applications_2.Application;
 import network_applications_2.connections.Connection;
 
 import java.io.*;
@@ -28,7 +29,7 @@ public class Utilities {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
             while ((line = reader.readLine()) != null) {
-                Connection connection = Connection.parseConnection(line, application);
+                Connection connection = Connection.parseConnection(line, application.getHost(), application.getPort());
                 if (connection == null) continue;
                 connections.add(connection);
             }

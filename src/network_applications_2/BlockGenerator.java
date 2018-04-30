@@ -2,6 +2,7 @@ package network_applications_2;
 
 import network_applications_2.block.BlockFormatException;
 import network_applications_2.block.BlockManager;
+import network_applications_2.message.MessageParser;
 import network_applications_2.message.data.Data;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFormatException;
@@ -48,7 +49,7 @@ public class BlockGenerator {
                 long timestamp = 2342352;
                 double amount = Math.abs(wallets.get(receiver));
                 Data data = new FreeMoney(receiver, amount);
-                messages.add(Message.parseMessage(timestamp + ", " +
+                messages.add(MessageParser.parseMessage(timestamp + ", " +
                         MessageGenerator.sign(messageGenerator.getKeys().get(receiver), Message.getStorageString(timestamp, data)) +
                         ", " + receiver + ", " + amount));
             }
