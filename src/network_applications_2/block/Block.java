@@ -2,97 +2,46 @@ package network_applications_2.block;
 
 import network_applications_2.message.Message;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.SortedSet;
 
-public class Block implements Comparable<Block>, Serializable {
+public class Block {
 
-    private long timestamp;
-    private String previousHash = "";
-    private List<Message> messages = new ArrayList<>();
-    private String newHash = "";
-    private String nonce = "";
+    private final long timestamp;
+    private final String previousHash;
+    private final SortedSet<Message> messages;
+    private final String hash;
+    private final String nonce;
 
-    public Block(String previousHash) {
-        this.previousHash = previousHash;
-        //timestamp = System.currentTimeMillis();
-    }
-
-    public Block(String previousHash, List<Message> messages) {
-        this.previousHash = previousHash;
-        this.messages = messages;
-        Collections.sort(messages);
-        timestamp = messages.get(messages.size()-1).getTimestamp();
-    }
-
-    public Block(long timestamp, String previousHash, List<Message> messages, String newHash, String nonce) {
+    Block(long timestamp, String previousHash, SortedSet<Message> messages, String hash, String nonce) {
         this.timestamp = timestamp;
         this.previousHash = previousHash;
         this.messages = messages;
-        this.newHash = newHash;
+        this.hash = hash;
         this.nonce = nonce;
-    }
-
-    public void addMessage(Message message) {
-        if (!messages.contains(message)) {
-            messages.add(message);
-            Collections.sort(messages);
-        }
-    }
-
-    public String getPreviousHash() {
-        return previousHash;
-    }
-
-    public List<Message> getMessages() {
-        return messages;
-    }
-
-    public void setHash(String hash) {
-        newHash = hash;
-    }
-
-    public String getHash() {
-        return newHash;
     }
 
     public long getTimestamp() {
         return timestamp;
     }
 
-    public String getStorageString() {
-        return getHash() + "|" + getHashlessString() + "|" + getNonce();
+    public String getPreviousHash() {
+        return previousHash;
     }
 
-    public String getHashlessString() {
-        return getPreviousHash() + "|" + getTimestamp() + "|" +
-                getMessages().stream().map(Message::getStorageString).collect(Collectors.joining(";"));
+    public Set<Message> getMessages() {
+        return messages;
     }
 
-
-    @Override
-    public int compareTo(Block o) {
-        if (o == null) return -1;
-        int compare = Long.compare(this.timestamp, o.getTimestamp());
-        if (this.newHash.equals(o.getHash())) {
-            compare = 0;
-        }
-        return compare;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return o instanceof Block && compareTo((Block) o) == 0;
+    public String getHash() {
+        return hash;
     }
 
     public String getNonce() {
         return nonce;
     }
 
-    public void setNonce(String nonce) {
-        this.nonce = nonce;
+    public String getStorageString() {
+        return String.format("%d,%s,%s,%s,{%s}", timestamp, previousHash, hash, nonce, BlockUtils.messagesStorageString(messages));
     }
 }

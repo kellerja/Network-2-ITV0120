@@ -3,30 +3,29 @@ package network_applications_2.message.data;
 public class Transaction extends Data {
 
     private final String sender;
+    private final String receiver;
+    private final double amount;
 
     public Transaction(String sender, String receiver, double amount) {
-        super(receiver, amount);
         this.sender = sender;
-    }
-
-    @Override
-    public int compareTo(Data o) {
-        if (!(o instanceof Transaction)) {
-            return super.compareTo(o);
-        }
-        Transaction otherData = (Transaction) o;
-        return getSender() == null || getSender().equals(otherData.getSender()) ?
-                super.compareTo(o) :
-                getSender().compareTo(otherData.getSender());
+        this.receiver = receiver;
+        this.amount = amount;
     }
 
     public String getSender() {
         return sender;
     }
 
-    @Override
-    public String getStorageString() {
-        return sender + ", " + getReceiver() + ", " + getAmount();
+    public String getReceiver() {
+        return receiver;
     }
 
+    public double getAmount() {
+        return amount;
+    }
+
+    @Override
+    public String getStorageString() {
+        return String.format("%s,%s,%f", sender, receiver, amount);
+    }
 }
