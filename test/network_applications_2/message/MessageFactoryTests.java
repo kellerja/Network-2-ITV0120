@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
@@ -32,7 +33,7 @@ public class MessageFactoryTests {
     public void testCreateFreeMoneyMessage() throws MessageFormatException {
         Message<FreeMoney> message = MessageFactory.create(15.66);
         assertNotNull(message);
-        assertEquals(15.66, message.getData().getAmount(), 10e-3);
+        assertEquals(BigDecimal.valueOf(15.66), message.getData().getAmount());
         assertEquals(keyManager.getPublicKey(), message.getData().getReceiver());
         assertNotNull( message.getHash());
         assertNotNull(message.getSignature());
@@ -52,7 +53,7 @@ public class MessageFactoryTests {
     public void testCreateTransaction() throws MessageFormatException {
         Message<Transaction> message = MessageFactory.create(publicKey, 32.44);
         assertNotNull(message);
-        assertEquals(32.44, message.getData().getAmount(), 10e-3);
+        assertEquals(BigDecimal.valueOf(32.44), message.getData().getAmount());
         assertEquals(keyManager.getPublicKey(), message.getData().getSender());
         assertEquals(publicKey, message.getData().getReceiver());
         assertNotNull( message.getHash());
@@ -82,7 +83,7 @@ public class MessageFactoryTests {
         assertTrue(message.getData() instanceof FreeMoney);
         FreeMoney freeMoney = (FreeMoney) message.getData();
         assertEquals(keyManager.getPublicKey(), freeMoney.getReceiver());
-        assertEquals(33.66, freeMoney.getAmount(), 10e-3);
+        assertEquals(BigDecimal.valueOf(33.66), freeMoney.getAmount());
         assertNotEquals(0, message.getTimestamp());
         assertNotNull(message.getHash());
         assertNotNull(message.getSignature());
@@ -111,7 +112,7 @@ public class MessageFactoryTests {
         Transaction transaction = (Transaction) message.getData();
         assertEquals(keyManager.getPublicKey(), transaction.getSender());
         assertEquals(publicKey, transaction.getReceiver());
-        assertEquals(12, transaction.getAmount(), 10e-3);
+        assertEquals(BigDecimal.valueOf(12f), transaction.getAmount());
         assertNotEquals(0, message.getTimestamp());
         assertNotNull(message.getHash());
         assertNotNull(message.getSignature());

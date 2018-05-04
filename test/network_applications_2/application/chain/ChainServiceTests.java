@@ -10,8 +10,10 @@ import network_applications_2.chain.ChainFormatException;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFactory;
 import network_applications_2.message.MessageFormatException;
+import network_applications_2.message.data.Transaction;
 import network_applications_2.utilities.KeyGenerator;
 import network_applications_2.utilities.KeyManager;
+import network_applications_2.wallet.InsufficientFundsException;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 
@@ -55,7 +57,7 @@ public class ChainServiceTests {
 
     private static SortedSet<Message> generateMessages(int j) throws MessageFormatException {
         SortedSet<Message> messages = new TreeSet<>();
-        messages.add(MessageFactory.create(users.get(0), 1000));
+        messages.add(MessageFactory.create(users.get(j), 1000));
         for (int i = 1; i < 10; i++) {
             messages.add(MessageFactory.create(users.get(j + i - 1),
                     KeyManager.convertToString(users.get(j + i).getPublic()),
@@ -75,14 +77,14 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testAddBlock() throws ChainFormatException {
+    public void testAddBlock() throws ChainFormatException, InsufficientFundsException {
         assertEquals(0, chainService.getBlocks().size());
         chainService.addBlock(blocks.get(0));
         assertEquals(1, chainService.getBlocks().size());
     }
 
     @Test
-    public void testGetBlocksFromHash() throws ChainFormatException {
+    public void testGetBlocksFromHash() throws ChainFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -92,7 +94,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testGetBlockByHash() throws ChainFormatException {
+    public void testGetBlockByHash() throws ChainFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -102,7 +104,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testGetBlockByHashNonexistentHashReturnsNull() throws ChainFormatException {
+    public void testGetBlockByHashNonexistentHashReturnsNull() throws ChainFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -111,7 +113,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testGetBlocksFromHashNonexistentHashReturnsEmptyList() throws ChainFormatException {
+    public void testGetBlocksFromHashNonexistentHashReturnsEmptyList() throws ChainFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -121,14 +123,14 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testAddNewBlockUpdatesLatestHash() throws ChainFormatException {
+    public void testAddNewBlockUpdatesLatestHash() throws ChainFormatException, InsufficientFundsException {
         assertNull(chainService.getLatestHash());
         chainService.addBlock(blocks.get(0));
         assertEquals(blocks.get(0).getHash(), chainService.getLatestHash());
     }
 
     @Test
-    public void testMerge() throws ChainFormatException, MessageFormatException, BlockFormatException {
+    public void testMerge() throws ChainFormatException, MessageFormatException, BlockFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -150,7 +152,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testMergeNotConnectedChainsReturnsEmptyList() throws ChainFormatException, MessageFormatException, BlockFormatException {
+    public void testMergeNotConnectedChainsReturnsEmptyList() throws ChainFormatException, MessageFormatException, BlockFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -168,7 +170,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testMergeSameChainReturnsEmptyList() throws ChainFormatException {
+    public void testMergeSameChainReturnsEmptyList() throws ChainFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -179,7 +181,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testMergeLongerChainWins() throws ChainFormatException, MessageFormatException, BlockFormatException {
+    public void testMergeLongerChainWins() throws ChainFormatException, MessageFormatException, BlockFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -202,7 +204,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testMergeSameChainWithLongerTailWins() throws ChainFormatException, MessageFormatException, BlockFormatException {
+    public void testMergeSameChainWithLongerTailWins() throws ChainFormatException, MessageFormatException, BlockFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -216,7 +218,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testMergeChainContinuation() throws ChainFormatException, MessageFormatException, BlockFormatException {
+    public void testMergeChainContinuation() throws ChainFormatException, MessageFormatException, BlockFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }
@@ -237,7 +239,7 @@ public class ChainServiceTests {
     }
 
     @Test
-    public void testMergeSubChainReturnsEmptyList() throws ChainFormatException {
+    public void testMergeSubChainReturnsEmptyList() throws ChainFormatException, InsufficientFundsException {
         for (Block block: blocks) {
             chainService.addBlock(block);
         }

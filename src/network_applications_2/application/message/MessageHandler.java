@@ -9,6 +9,7 @@ import network_applications_2.chain.ChainFormatException;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFactory;
 import network_applications_2.message.MessageFormatException;
+import network_applications_2.wallet.InsufficientFundsException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -63,7 +64,7 @@ public class MessageHandler implements HttpHandler {
                 Message message = MessageFactory.parse(possibleMessage);
                 messageService.addMessage(message);
                 response.append(message.getStorageString()).append("\n");
-            } catch (BlockFormatException | ChainFormatException | MessageFormatException | MessageDeniedException e) {
+            } catch (BlockFormatException | InsufficientFundsException | ChainFormatException | MessageFormatException | MessageDeniedException e) {
                 response.append(possibleMessage).append(" failed with exception {").append(e).append("}\n");
             }
         }

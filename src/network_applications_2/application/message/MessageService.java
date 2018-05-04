@@ -9,6 +9,7 @@ import network_applications_2.connection.Connection;
 import network_applications_2.message.Message;
 import network_applications_2.message.MessageFactory;
 import network_applications_2.message.MessageFormatException;
+import network_applications_2.wallet.InsufficientFundsException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +41,7 @@ public class MessageService {
         }
     }
 
-    public void addMessage(Message message) throws MessageDeniedException, BlockFormatException, ChainFormatException {
+    public void addMessage(Message message) throws MessageDeniedException, BlockFormatException, ChainFormatException, InsufficientFundsException {
         synchronized (messages) {
             if (message == null) {
                 throw new MessageDeniedException("Message must not be null");
@@ -57,7 +58,7 @@ public class MessageService {
         }
     }
 
-    private void propagateMessages() throws BlockFormatException, ChainFormatException {
+    private void propagateMessages() throws BlockFormatException, ChainFormatException, InsufficientFundsException {
         synchronized (messages) {
             blockService.addMessages(getMessages());
             messages.clear();
@@ -115,7 +116,7 @@ public class MessageService {
                             Message message = MessageFactory.parse(line);
                             try {
                                 addMessage(message);
-                            } catch (BlockFormatException | ChainFormatException | MessageDeniedException ignored) {
+                            } catch (BlockFormatException | ChainFormatException | InsufficientFundsException | MessageDeniedException ignored) {
                             }
                         }
                     }

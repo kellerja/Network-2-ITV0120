@@ -10,6 +10,7 @@ import network_applications_2.chain.ChainFormatException;
 import network_applications_2.connection.Connection;
 import network_applications_2.message.Message;
 import network_applications_2.message.data.FreeMoney;
+import network_applications_2.wallet.InsufficientFundsException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +32,7 @@ public class BlockService {
         this.chainService = chainService;
     }
 
-    public void addMessages(SortedSet<Message> messages) throws BlockFormatException, ChainFormatException {
+    public void addMessages(SortedSet<Message> messages) throws BlockFormatException, ChainFormatException, InsufficientFundsException {
         Block block = BlockFactory.create(chainService.getLatestHash(), messages);
         long freeMoneyMessageCount = block.getMessages().stream().filter(m -> m.getData() instanceof FreeMoney).count();
         if (freeMoneyMessageCount > MAXIMUM_FREE_MONEY_MESSAGES_PER_BLOCK) {

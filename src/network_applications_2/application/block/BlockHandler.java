@@ -13,6 +13,7 @@ import network_applications_2.chain.ChainFactory;
 import network_applications_2.chain.ChainFormatException;
 import network_applications_2.connection.Connection;
 import network_applications_2.message.MessageFormatException;
+import network_applications_2.wallet.InsufficientFundsException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -155,7 +156,7 @@ public class BlockHandler implements HttpHandler {
                     chain.addBlock(block);
                     chains.add(chain);
                 }
-            } catch (ChainFormatException | BlockFormatException | MessageFormatException e) {
+            } catch (InsufficientFundsException | ChainFormatException | BlockFormatException | MessageFormatException e) {
                 response.append("Block ").append(possibleBlock).append(" malformed with error ").append(e.getMessage()).append("\n");
             }
         }
@@ -178,7 +179,7 @@ public class BlockHandler implements HttpHandler {
                             Block block = BlockFactory.parse(line);
                             try {
                                 chainService.addBlock(block);
-                            } catch (ChainFormatException ignored) {
+                            } catch (ChainFormatException | InsufficientFundsException ignored) {
                             }
                         }
                     }

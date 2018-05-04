@@ -8,6 +8,7 @@ import network_applications_2.message.Message;
 import network_applications_2.message.MessageFactory;
 import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.data.Transaction;
+import network_applications_2.wallet.InsufficientFundsException;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -49,14 +50,14 @@ public class MessageServiceTests {
     }
 
     @Test
-    public void testsAddMessage() throws MessageDeniedException, BlockFormatException, ChainFormatException {
+    public void testsAddMessage() throws MessageDeniedException, BlockFormatException, ChainFormatException, InsufficientFundsException {
         assertEquals(0, messageService.getMessages().size());
         messageService.addMessage(message);
         assertEquals(1, messageService.getMessages().size());
     }
 
     @Test
-    public void testAddMessagesToCreateBlock() throws MessageFormatException, MessageDeniedException, BlockFormatException, ChainFormatException {
+    public void testAddMessagesToCreateBlock() throws MessageFormatException, MessageDeniedException, BlockFormatException, ChainFormatException, InsufficientFundsException {
         SortedSet<Message> reference = messageService.getMessages();
         for (int i = 0; i < MessageService.MINIMUM_MESSAGES_PER_BLOCK; i++) {
             messageService.addMessage(MessageFactory.create(Double.toString(Math.random()), Math.random()));
@@ -67,7 +68,7 @@ public class MessageServiceTests {
     }
 
     @Test
-    public void testAddMultipleOfSameMessageInstance() throws MessageDeniedException, BlockFormatException, ChainFormatException {
+    public void testAddMultipleOfSameMessageInstance() throws MessageDeniedException, BlockFormatException, ChainFormatException, InsufficientFundsException {
         messageService.addMessage(message);
         exception.expect(MessageDeniedException.class);
         messageService.addMessage(message);
