@@ -245,4 +245,26 @@ public class ChainServiceTests {
         assertTrue(target.isEmpty());
         assertEquals(blocks.size(), chainService.getBlocks().size());
     }
+
+    @Test
+    public void testMergeToEmptyChain() throws ChainFormatException {
+        Chain chain = ChainFactory.create(blocks);
+        List<Block> target = chainService.merge(chain);
+        assertNotNull(target);
+        assertFalse(target.isEmpty());
+        assertEquals(blocks.size(), target.size());
+        for (int i = 0; i < target.size(); i++) {
+            assertEquals(blocks.get(i), target.get(i));
+        }
+    }
+
+    @Test
+    public void testMergeOneBlockToEmptyChain() throws ChainFormatException, MessageFormatException, BlockFormatException {
+        Block block = BlockFactory.create(null, generateMessages(0));
+        Chain chain = ChainFactory.create(Collections.singletonList(block));
+        List<Block> target = chainService.merge(chain);
+        assertNotNull(target);
+        assertEquals(1, target.size());
+        assertEquals(block, target.get(0));
+    }
 }

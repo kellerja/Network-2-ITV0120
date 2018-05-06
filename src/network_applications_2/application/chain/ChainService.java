@@ -57,9 +57,12 @@ public class ChainService {
 
     public List<Block> merge(Chain chainToMerge) {
         synchronized (chain) {
+            if (chainToMerge.getBlocks().isEmpty()) {
+                return new ArrayList<>();
+            }
             Block startBlock = chainToMerge.getBlocks().get(0);
             List<Block> blocks = getBlocks(startBlock.getPreviousHash());
-            if (blocks.isEmpty()) {
+            if (!chain.getBlocks().isEmpty() && blocks.isEmpty()) {
                 return new ArrayList<>();
             }
             if (startBlock.getPreviousHash() != null) {
@@ -73,7 +76,7 @@ public class ChainService {
                 }
                 break;
             }
-            if (startBlock.equals(chainToMerge.getBlocks().get(chainToMerge.getBlocks().size() - 1))) {
+            if (chainToMerge.getBlocks().size() > 1 && startBlock.equals(chainToMerge.getBlocks().get(chainToMerge.getBlocks().size() - 1))) {
                 return new ArrayList<>();
             }
             int endIndex = chainToMerge.getBlocks().size();

@@ -87,7 +87,8 @@ public class BlockService {
         for (Connection connection: connectionService.getConnections(true)) {
             new Thread(() -> {
                 try {
-                    URL url = new URL(connection.getUrl() + "/blocks/" + chainService.getBlocks().get(chainService.getBlocks().size() - 1));
+                    List<Block> requestBlocks = chainService.getBlocks();
+                    URL url = new URL(connection.getUrl() + "/blocks/" + (requestBlocks.isEmpty() ? "" : requestBlocks.get(requestBlocks.size() - 1).getHash()));
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
                     httpURLConnection.setRequestMethod("GET");
                     httpURLConnection.setRequestProperty("Port", Integer.toString(connectionService.getApplicationPort()));
@@ -100,6 +101,7 @@ public class BlockService {
                             try {
                                 blocks.add(BlockFactory.parse(line));
                             } catch (BlockFormatException | MessageFormatException e) {
+                                e.printStackTrace();
                                 break;
                             }
                         }

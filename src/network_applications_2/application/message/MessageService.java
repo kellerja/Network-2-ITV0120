@@ -25,7 +25,8 @@ public class MessageService {
 
     public static final int MINIMUM_MESSAGES_PER_BLOCK = 5;
 
-    public final SortedSet<Message> messages;
+    private final SortedSet<Message> messages;
+    private final SortedSet<Message> recentlyRemovedMessages;
     private ConnectionService connectionService;
     private BlockService blockService;
 
@@ -33,6 +34,7 @@ public class MessageService {
         this.connectionService = connectionService;
         this.blockService = blockService;
         messages = new TreeSet<>();
+        recentlyRemovedMessages = new TreeSet<>();
         requestCurrentMessages();
     }
 
@@ -50,6 +52,9 @@ public class MessageService {
             if (messages.contains(message)) {
                 throw new MessageDeniedException("Message was already present");
             }
+            if (recentlyRemovedMessages.contains(message)) {
+                throw new MessageDeniedException("Message was already denied");
+            }
             messages.add(message);
             floodMessage(message);
 
@@ -61,10 +66,13 @@ public class MessageService {
 
     private void propagateMessages() throws InsufficientFundsException, BlockFormatException, ChainFormatException {
         synchronized (messages) {
+            recentlyRemovedMessages.clear();
             try {
                 blockService.addMessages(getMessages());
+                recentlyRemovedMessages.addAll(messages);
                 messages.clear();
             } catch (BlockFormatException | ChainFormatException | InsufficientFundsException e) {
+                recentlyRemovedMessages.addAll(messages);
                 messages.clear();
                 e.printStackTrace();
                 throw e;
