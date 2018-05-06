@@ -8,6 +8,7 @@ import network_applications_2.application.connection.ConnectionHandler;
 import network_applications_2.application.connection.ConnectionService;
 import network_applications_2.application.connection.PingPongHandler;
 import network_applications_2.application.error.ErrorHandler;
+import network_applications_2.application.identity.IdentityHandler;
 import network_applications_2.application.message.FreeMoneyHandler;
 import network_applications_2.application.message.MessageHandler;
 import network_applications_2.application.message.MessageService;
@@ -68,6 +69,7 @@ public class Application {
         BlockHandler blockHandler = new BlockHandler(connectionService, blockService, chainService);
         server.createContext("/blocks", blockHandler);
         server.createContext("/getdata", blockHandler);
+        server.createContext("/identity", new IdentityHandler(connectionService, keyManager));
         server.createContext("/", new ErrorHandler());
     }
 
