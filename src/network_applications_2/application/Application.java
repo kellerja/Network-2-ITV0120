@@ -13,6 +13,7 @@ import network_applications_2.application.message.MessageHandler;
 import network_applications_2.application.message.MessageService;
 import network_applications_2.application.message.TransactionHandler;
 import network_applications_2.chain.ChainFormatException;
+import network_applications_2.connection.Connection;
 import network_applications_2.utilities.KeyManager;
 
 import java.io.File;
@@ -21,6 +22,7 @@ import java.net.InetSocketAddress;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Application {
     private HttpServer server;
@@ -38,6 +40,23 @@ public class Application {
         setUpServices(server.getAddress().getHostName(), port);
         setUpRoutes();
         server.start();
+        connectionService.requestConnections(true, -1);
+        blockService.requestMissingBlocks();
+        messageService.requestCurrentMessages();
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            for (Connection connection: connectionService.getConnections()) {
+                connection.testConnection();
+            }
+        }, 5, 5, TimeUnit.MINUTES);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            connectionService.requestConnections(true, -1);
+        }, 10, 10, TimeUnit.MINUTES);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            blockService.requestMissingBlocks();
+        }, 10, 10, TimeUnit.MINUTES);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
+            messageService.requestCurrentMessages();
+        }, 10, 10, TimeUnit.MINUTES);
     }
 
     private void setUpRoutes() {

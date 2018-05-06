@@ -7,6 +7,10 @@ import network_applications_2.connection.ConnectionFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +45,9 @@ public class ConnectionService {
         if (limit <= 0) {
             limit = connections.size();
         }
+        if (!alive) {
+            return getConnections();
+        }
         synchronized (connections) {
             return connections.stream().filter(Connection::isAlive).limit(limit).collect(Collectors.toList());
         }
@@ -59,7 +66,7 @@ public class ConnectionService {
             int connectionIndex = connections.indexOf(connection);
             if (connectionIndex == -1) {
                 connections.add(connection);
-                Utilities.writeConnectionToFile(connection, new File("resources/KnownHosts.csv.csv"));
+                Utilities.writeConnectionToFile(connection, new File("resources/KnownHosts.csv"));
             } else {
                 connections.get(connectionIndex).testConnection();
             }
@@ -77,4 +84,42 @@ public class ConnectionService {
     public int getApplicationPort() {
         return applicationPort;
     }
+
+    public void requestConnections(boolean isAlive, int count) {
+        final String state = isAlive ? "alive" : "all";
+        final String countValue = count <= 0 ? "infinity" : Integer.toString(count);
+        for (Connection connection: getConnections(true)) {
+            new Thread(() -> {
+                try {
+                    URL url = new URL(connection.getUrl() + "/connections?state=" + state + "&count=" + countValue);
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("GET");
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(applicationPort));
+
+                    int responseCode = httpURLConnection.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        InputStream is = httpURLConnection.getInputStream();
+                        byte[] dataBytes = Utilities.inputStream2ByteArray(is);
+                        String[] data = new String(dataBytes).split("\\R");
+                        for (String line: data) {
+                            Connection newConnection = ConnectionFactory.create(line, applicationHost, applicationPort);
+                            if (newConnection == null || connections.contains(newConnection)) {
+                                continue;
+                            }
+                            synchronized (connections) {
+                                connections.add(newConnection);
+                            }
+                            Utilities.writeConnectionToFile(newConnection, new File("resources/KnownHosts.csv"));
+                        }
+                    }
+                    httpURLConnection.disconnect();
+                } catch (ConnectException e) {
+                    connection.testConnection();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+
 }

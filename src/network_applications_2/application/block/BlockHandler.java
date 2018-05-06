@@ -163,33 +163,4 @@ public class BlockHandler implements HttpHandler {
         return chains;
     }
 
-    public void requestMissingBlocks() {
-        for (Connection connection: connectionService.getConnections(true)) {
-            new Thread(() -> {
-                try {
-                    URL url = new URL(connection.getUrl() + "/blocks/" + chainService.getBlocks().get(chainService.getBlocks().size() - 1));
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-                    httpURLConnection.setRequestMethod("GET");
-                    httpURLConnection.setRequestProperty("Port", Integer.toString(connectionService.getApplicationPort()));
-
-                    if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                        InputStream is = httpURLConnection.getInputStream();
-                        String[] data = new String(Utilities.inputStream2ByteArray(is)).split("\\R");
-                        for (String line: data) {
-                            Block block = BlockFactory.parse(line);
-                            try {
-                                chainService.addBlock(block);
-                            } catch (ChainFormatException | InsufficientFundsException ignored) {
-                            }
-                        }
-                    }
-                    httpURLConnection.disconnect();
-                } catch (ConnectException e) {
-                    connection.testConnection();
-                } catch (IOException | MessageFormatException | BlockFormatException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        }
-    }
 }

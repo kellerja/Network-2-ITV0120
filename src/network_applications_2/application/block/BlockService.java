@@ -7,9 +7,12 @@ import network_applications_2.block.Block;
 import network_applications_2.block.BlockFactory;
 import network_applications_2.block.BlockFormatException;
 import network_applications_2.block.MerkleTree;
+import network_applications_2.chain.Chain;
+import network_applications_2.chain.ChainFactory;
 import network_applications_2.chain.ChainFormatException;
 import network_applications_2.connection.Connection;
 import network_applications_2.message.Message;
+import network_applications_2.message.MessageFormatException;
 import network_applications_2.message.data.FreeMoney;
 import network_applications_2.wallet.InsufficientFundsException;
 
@@ -19,6 +22,8 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NavigableSet;
 import java.util.SortedSet;
 
@@ -72,6 +77,39 @@ public class BlockService {
                 } catch (ConnectException e) {
                     connection.testConnection();
                 } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+    }
+
+    public void requestMissingBlocks() {
+        for (Connection connection: connectionService.getConnections(true)) {
+            new Thread(() -> {
+                try {
+                    URL url = new URL(connection.getUrl() + "/blocks/" + chainService.getBlocks().get(chainService.getBlocks().size() - 1));
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+                    httpURLConnection.setRequestMethod("GET");
+                    httpURLConnection.setRequestProperty("Port", Integer.toString(connectionService.getApplicationPort()));
+
+                    if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        InputStream is = httpURLConnection.getInputStream();
+                        String[] data = new String(Utilities.inputStream2ByteArray(is)).split("\\R");
+                        List<Block> blocks = new ArrayList<>();
+                        for (String line: data) {
+                            try {
+                                blocks.add(BlockFactory.parse(line));
+                            } catch (BlockFormatException | MessageFormatException e) {
+                                break;
+                            }
+                        }
+                        Chain chain = ChainFactory.create(blocks);
+                        chainService.merge(chain);
+                    }
+                    httpURLConnection.disconnect();
+                } catch (ConnectException e) {
+                    connection.testConnection();
+                } catch (IOException | ChainFormatException e) {
                     e.printStackTrace();
                 }
             }).start();
