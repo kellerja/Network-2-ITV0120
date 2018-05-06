@@ -8,11 +8,14 @@ import network_applications_2.application.connection.ConnectionHandler;
 import network_applications_2.application.connection.ConnectionService;
 import network_applications_2.application.connection.PingPongHandler;
 import network_applications_2.application.error.ErrorHandler;
+import network_applications_2.application.message.FreeMoneyHandler;
 import network_applications_2.application.message.MessageHandler;
 import network_applications_2.application.message.MessageService;
+import network_applications_2.application.message.TransactionHandler;
 import network_applications_2.chain.ChainFormatException;
 import network_applications_2.utilities.KeyManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.NoSuchAlgorithmException;
@@ -41,6 +44,8 @@ public class Application {
         server.createContext("/test/ping", new PingPongHandler(connectionService));
         server.createContext("/connections", new ConnectionHandler(connectionService));
         server.createContext("/messages", new MessageHandler(connectionService, messageService));
+        server.createContext("/messages/transaction", new TransactionHandler(connectionService));
+        server.createContext("/messages/freemoney", new FreeMoneyHandler(connectionService));
         BlockHandler blockHandler = new BlockHandler(connectionService, blockService, chainService);
         server.createContext("/blocks", blockHandler);
         server.createContext("/getdata", blockHandler);
@@ -49,7 +54,7 @@ public class Application {
 
     private void setUpServices(String host, int port) throws IOException, ChainFormatException {
         connectionService = new ConnectionService(host, port);
-        chainService = new ChainService();
+        chainService = new ChainService(new File(ChainService.CHAIN_FILE));
         blockService = new BlockService(connectionService, chainService);
         messageService = new MessageService(connectionService, blockService);
     }

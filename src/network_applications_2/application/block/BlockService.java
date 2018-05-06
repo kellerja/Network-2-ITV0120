@@ -6,6 +6,7 @@ import network_applications_2.application.utilities.Utilities;
 import network_applications_2.block.Block;
 import network_applications_2.block.BlockFactory;
 import network_applications_2.block.BlockFormatException;
+import network_applications_2.block.MerkleTree;
 import network_applications_2.chain.ChainFormatException;
 import network_applications_2.connection.Connection;
 import network_applications_2.message.Message;
@@ -18,6 +19,7 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.NavigableSet;
 import java.util.SortedSet;
 
 public class BlockService {
@@ -32,7 +34,7 @@ public class BlockService {
         this.chainService = chainService;
     }
 
-    public void addMessages(SortedSet<Message> messages) throws BlockFormatException, ChainFormatException, InsufficientFundsException {
+    public void addMessages(NavigableSet<Message> messages) throws BlockFormatException, ChainFormatException, InsufficientFundsException {
         Block block = BlockFactory.create(chainService.getLatestHash(), messages);
         long freeMoneyMessageCount = block.getMessages().stream().filter(m -> m.getData() instanceof FreeMoney).count();
         if (freeMoneyMessageCount > MAXIMUM_FREE_MONEY_MESSAGES_PER_BLOCK) {

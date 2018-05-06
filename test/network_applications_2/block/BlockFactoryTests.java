@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 
 public class BlockFactoryTests {
 
-    private static SortedSet<Message> messages;
+    private static NavigableSet<Message> messages;
     private static List<KeyPair> users;
     private static String blockString;
 

@@ -2,23 +2,24 @@ package network_applications_2.block;
 
 import network_applications_2.message.Message;
 
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.NavigableSet;
 
 public class Block {
 
     private final long timestamp;
     private final String previousHash;
-    private final SortedSet<Message> messages;
+    private final NavigableSet<Message> messages;
     private final String hash;
     private final String nonce;
+    private final String merkleRootHash;
 
-    Block(long timestamp, String previousHash, SortedSet<Message> messages, String hash, String nonce) {
+    Block(long timestamp, String previousHash, NavigableSet<Message> messages, String hash, String nonce, String merkleRootHash) {
         this.timestamp = timestamp;
         this.previousHash = previousHash;
         this.messages = messages;
         this.hash = hash;
         this.nonce = nonce;
+        this.merkleRootHash = merkleRootHash;
     }
 
     public long getTimestamp() {
@@ -29,7 +30,7 @@ public class Block {
         return previousHash;
     }
 
-    public Set<Message> getMessages() {
+    public NavigableSet<Message> getMessages() {
         return messages;
     }
 
@@ -39,6 +40,10 @@ public class Block {
 
     public String getNonce() {
         return nonce;
+    }
+
+    public String getMerkleRootHash() {
+        return merkleRootHash;
     }
 
     public String getStorageString() {

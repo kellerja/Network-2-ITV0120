@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.NavigableSet;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -35,7 +36,7 @@ public class MessageService {
         requestCurrentMessages();
     }
 
-    public SortedSet<Message> getMessages() {
+    public NavigableSet<Message> getMessages() {
         synchronized (messages) {
             return new TreeSet<>(messages);
         }
@@ -58,10 +59,16 @@ public class MessageService {
         }
     }
 
-    private void propagateMessages() throws BlockFormatException, ChainFormatException, InsufficientFundsException {
+    private void propagateMessages() throws InsufficientFundsException, BlockFormatException, ChainFormatException {
         synchronized (messages) {
-            blockService.addMessages(getMessages());
-            messages.clear();
+            try {
+                blockService.addMessages(getMessages());
+                messages.clear();
+            } catch (BlockFormatException | ChainFormatException | InsufficientFundsException e) {
+                messages.clear();
+                e.printStackTrace();
+                throw e;
+            }
         }
     }
 

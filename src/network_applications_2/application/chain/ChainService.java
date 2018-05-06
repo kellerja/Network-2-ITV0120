@@ -2,21 +2,27 @@ package network_applications_2.application.chain;
 
 import network_applications_2.block.Block;
 import network_applications_2.chain.Chain;
-import network_applications_2.chain.ChainFactory;
 import network_applications_2.chain.ChainFormatException;
+import network_applications_2.chain.ChainUtils;
 import network_applications_2.wallet.InsufficientFundsException;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChainService {
 
+    public static final String CHAIN_FILE = "resources/Blocks.csv";
+
     private final Chain chain;
     private String latestHash;
+    private File chainFile;
 
-    public ChainService() throws ChainFormatException {
-        chain = ChainFactory.create(new ArrayList<>());
-        latestHash = null;
+    public ChainService(File chainFile) throws ChainFormatException {
+        this.chainFile = chainFile;
+        chain = ChainUtils.readChainFile(chainFile);
+        latestHash = chain.getBlocks().size() == 0 ? null : chain.getBlocks().get(chain.getBlocks().size() - 1).getHash();
     }
 
     public List<Block> getBlocks() {
@@ -41,6 +47,11 @@ public class ChainService {
         synchronized (chain) {
             chain.addBlock(block);
             latestHash = block.getHash();
+            try {
+                ChainUtils.appendChainFile(chainFile, block);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -88,6 +99,11 @@ public class ChainService {
                 e.printStackTrace();
             }
             latestHash = chain.getBlocks().get(chain.getBlocks().size() - 1).getHash();
+            try {
+                ChainUtils.rewriteChainFile(chainFile, chain);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return chainToMerge.getBlocks().subList(i, endIndex);
         }
     }

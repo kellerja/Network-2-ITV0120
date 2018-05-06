@@ -14,10 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.security.KeyPair;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -39,7 +36,7 @@ public class ChainFactoryTests {
             for (int i = 0; i < 10; i++) {
                 users.add(KeyGenerator.generate());
             }
-            SortedSet<Message> messages = new TreeSet<>();
+            NavigableSet<Message> messages = new TreeSet<>();
             messages.add(MessageFactory.create(users.get(0), 1000));
             for (int i = 1; i < 10; i++) {
                 messages.add(MessageFactory.create(users.get(j + i - 1),

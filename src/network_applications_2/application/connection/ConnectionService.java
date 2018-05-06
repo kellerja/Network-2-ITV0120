@@ -70,6 +70,10 @@ public class ConnectionService {
         return applicationHost;
     }
 
+    public String getSafeApplicationHost() {
+        return applicationHost.matches("0:0:0:0:0:0:0:0") ? "http://localhost" : applicationHost;
+    }
+
     public int getApplicationPort() {
         return applicationPort;
     }

@@ -2,7 +2,7 @@ package network_applications_2.block;
 
 import network_applications_2.message.Message;
 
-import java.util.SortedSet;
+import java.util.NavigableSet;
 
 public class BlockUtils {
 
@@ -17,7 +17,7 @@ public class BlockUtils {
         return String.format("%d,%s,%s,{%s}", timestamp, previousHash, nonce, messages);
     }
 
-    public static String messagesStorageString(SortedSet<Message> messages) {
+    public static String messagesStorageString(NavigableSet<Message> messages) {
         return messages.stream().map(Message::getStorageString).reduce("", (accumulator, current) -> accumulator + MESSAGES_SEPARATOR + current).substring(1);
     }
 

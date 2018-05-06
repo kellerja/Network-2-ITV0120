@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
+import java.util.NavigableSet;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -37,7 +38,7 @@ public class BlockServiceTests {
 
     private BlockService blockService;
 
-    private static SortedSet<Message> messages;
+    private static NavigableSet<Message> messages;
 
     private static int HASH_VALIDATION_ZEROES_COUNT_MEMORY;
 
@@ -71,7 +72,7 @@ public class BlockServiceTests {
 
     @Test
     public void testAddMessagesTooManyFreeMoneyMessagesThrowsError() throws MessageFormatException, BlockFormatException, ChainFormatException, InsufficientFundsException {
-        SortedSet<Message> messages = new TreeSet<>();
+        NavigableSet<Message> messages = new TreeSet<>();
         for (int i = 0; i <= BlockService.MAXIMUM_FREE_MONEY_MESSAGES_PER_BLOCK; i++) {
             messages.add(MessageFactory.create(100 + i));
         }
